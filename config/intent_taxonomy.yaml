@@ -1,0 +1,145 @@
+# One entry per Banking77 intent. Names must match intents.csv exactly.
+# fraud_type null means the intent is ordinary. fraud_relevant in dim_intent
+# is true exactly when fraud_type is set.
+# risk_level is a property of the intent, not of a simulated user.
+
+risk_levels: [low, medium, high]
+
+# These lists are the contract. prepare_banking77.py fails if they disagree
+# with the per-intent fraud_type and risk_level fields below.
+fraud_type_roster:
+  account_takeover:
+    risk_level: high
+    description: >
+      Credential and profile changes that precede unauthorized transfers:
+      PIN or passcode reset, a blocked PIN, edited personal details, or a lost phone.
+    intents:
+      - change_pin
+      - passcode_forgotten
+      - pin_blocked
+      - edit_personal_details
+      - lost_or_stolen_phone
+  card_compromise:
+    risk_level: high
+    description: >
+      Lost, stolen, or unrecognized card activity, including cash withdrawals
+      the customer does not recognize.
+    intents:
+      - compromised_card
+      - lost_or_stolen_card
+      - card_payment_not_recognised
+      - cash_withdrawal_not_recognised
+  app_fraud_money_mule:
+    risk_level: medium
+    description: >
+      Authorized-push and mule patterns: receiving funds, beneficiary blocks,
+      cancelled transfers, and transfers the recipient never got.
+    intents:
+      - beneficiary_not_allowed
+      - transfer_not_received_by_recipient
+      - receiving_money
+      - cancel_transfer
+  identity_kyc_bypass:
+    risk_level: high
+    description: >
+      Identity checks used to get past KYC: verify me, I cannot verify, why verify.
+    intents:
+      - verify_my_identity
+      - unable_to_verify_identity
+      - why_verify_identity
+  virtual_card_abuse:
+    risk_level: medium
+    description: >
+      Disposable and virtual card limits and failures, a common card-testing surface.
+    intents:
+      - get_disposable_virtual_card
+      - disposable_card_limits
+      - virtual_card_not_working
+  refund_chargeback_abuse:
+    risk_level: medium
+    description: >
+      Refund requests, refunds that do not appear, and reverted card payments.
+    intents:
+      - request_refund
+      - "Refund_not_showing_up"
+      - "reverted_card_payment?"
+
+# Label order matches intents.csv. journey_stage groups an ordinary chatbot session.
+intents:
+  activate_my_card: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  age_limit: {journey_stage: limits, fraud_type: null, risk_level: low}
+  apple_pay_or_google_pay: {journey_stage: card_usage, fraud_type: null, risk_level: low}
+  atm_support: {journey_stage: cash, fraud_type: null, risk_level: low}
+  automatic_top_up: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  balance_not_updated_after_bank_transfer: {journey_stage: transfers, fraud_type: null, risk_level: low}
+  balance_not_updated_after_cheque_or_cash_deposit: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  beneficiary_not_allowed: {journey_stage: transfers, fraud_type: app_fraud_money_mule, risk_level: medium}
+  cancel_transfer: {journey_stage: transfers, fraud_type: app_fraud_money_mule, risk_level: medium}
+  card_about_to_expire: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  card_acceptance: {journey_stage: card_usage, fraud_type: null, risk_level: low}
+  card_arrival: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  card_delivery_estimate: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  card_linking: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  card_not_working: {journey_stage: card_usage, fraud_type: null, risk_level: low}
+  card_payment_fee_charged: {journey_stage: payments, fraud_type: null, risk_level: low}
+  card_payment_not_recognised: {journey_stage: payments, fraud_type: card_compromise, risk_level: high}
+  card_payment_wrong_exchange_rate: {journey_stage: payments, fraud_type: null, risk_level: low}
+  card_swallowed: {journey_stage: card_usage, fraud_type: null, risk_level: low}
+  cash_withdrawal_charge: {journey_stage: cash, fraud_type: null, risk_level: low}
+  cash_withdrawal_not_recognised: {journey_stage: cash, fraud_type: card_compromise, risk_level: high}
+  change_pin: {journey_stage: account_access, fraud_type: account_takeover, risk_level: high}
+  compromised_card: {journey_stage: account_access, fraud_type: card_compromise, risk_level: high}
+  contactless_not_working: {journey_stage: card_usage, fraud_type: null, risk_level: low}
+  country_support: {journey_stage: foreign_exchange, fraud_type: null, risk_level: low}
+  declined_card_payment: {journey_stage: payments, fraud_type: null, risk_level: low}
+  declined_cash_withdrawal: {journey_stage: cash, fraud_type: null, risk_level: low}
+  declined_transfer: {journey_stage: transfers, fraud_type: null, risk_level: low}
+  direct_debit_payment_not_recognised: {journey_stage: payments, fraud_type: null, risk_level: low}
+  disposable_card_limits: {journey_stage: card_usage, fraud_type: virtual_card_abuse, risk_level: medium}
+  edit_personal_details: {journey_stage: account_access, fraud_type: account_takeover, risk_level: high}
+  exchange_charge: {journey_stage: foreign_exchange, fraud_type: null, risk_level: low}
+  exchange_rate: {journey_stage: foreign_exchange, fraud_type: null, risk_level: low}
+  exchange_via_app: {journey_stage: foreign_exchange, fraud_type: null, risk_level: low}
+  extra_charge_on_statement: {journey_stage: payments, fraud_type: null, risk_level: low}
+  failed_transfer: {journey_stage: transfers, fraud_type: null, risk_level: low}
+  fiat_currency_support: {journey_stage: foreign_exchange, fraud_type: null, risk_level: low}
+  get_disposable_virtual_card: {journey_stage: card_setup, fraud_type: virtual_card_abuse, risk_level: medium}
+  get_physical_card: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  getting_spare_card: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  getting_virtual_card: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  lost_or_stolen_card: {journey_stage: account_access, fraud_type: card_compromise, risk_level: high}
+  lost_or_stolen_phone: {journey_stage: account_access, fraud_type: account_takeover, risk_level: high}
+  order_physical_card: {journey_stage: card_setup, fraud_type: null, risk_level: low}
+  passcode_forgotten: {journey_stage: account_access, fraud_type: account_takeover, risk_level: high}
+  pending_card_payment: {journey_stage: payments, fraud_type: null, risk_level: low}
+  pending_cash_withdrawal: {journey_stage: cash, fraud_type: null, risk_level: low}
+  pending_top_up: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  pending_transfer: {journey_stage: transfers, fraud_type: null, risk_level: low}
+  pin_blocked: {journey_stage: account_access, fraud_type: account_takeover, risk_level: high}
+  receiving_money: {journey_stage: transfers, fraud_type: app_fraud_money_mule, risk_level: medium}
+  Refund_not_showing_up: {journey_stage: refunds, fraud_type: refund_chargeback_abuse, risk_level: medium}
+  request_refund: {journey_stage: refunds, fraud_type: refund_chargeback_abuse, risk_level: medium}
+  "reverted_card_payment?": {journey_stage: payments, fraud_type: refund_chargeback_abuse, risk_level: medium}
+  supported_cards_and_currencies: {journey_stage: card_usage, fraud_type: null, risk_level: low}
+  terminate_account: {journey_stage: account_access, fraud_type: null, risk_level: low}
+  top_up_by_bank_transfer_charge: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  top_up_by_card_charge: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  top_up_by_cash_or_cheque: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  top_up_failed: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  top_up_limits: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  top_up_reverted: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  topping_up_by_card: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  transaction_charged_twice: {journey_stage: payments, fraud_type: null, risk_level: low}
+  transfer_fee_charged: {journey_stage: transfers, fraud_type: null, risk_level: low}
+  transfer_into_account: {journey_stage: transfers, fraud_type: null, risk_level: low}
+  transfer_not_received_by_recipient: {journey_stage: transfers, fraud_type: app_fraud_money_mule, risk_level: medium}
+  transfer_timing: {journey_stage: transfers, fraud_type: null, risk_level: low}
+  unable_to_verify_identity: {journey_stage: identity, fraud_type: identity_kyc_bypass, risk_level: high}
+  verify_my_identity: {journey_stage: identity, fraud_type: identity_kyc_bypass, risk_level: high}
+  verify_source_of_funds: {journey_stage: identity, fraud_type: null, risk_level: low}
+  verify_top_up: {journey_stage: top_up, fraud_type: null, risk_level: low}
+  virtual_card_not_working: {journey_stage: card_usage, fraud_type: virtual_card_abuse, risk_level: medium}
+  visa_or_mastercard: {journey_stage: card_usage, fraud_type: null, risk_level: low}
+  why_verify_identity: {journey_stage: identity, fraud_type: identity_kyc_bypass, risk_level: high}
+  wrong_amount_of_cash_received: {journey_stage: cash, fraud_type: null, risk_level: low}
+  wrong_exchange_rate_for_cash_withdrawal: {journey_stage: foreign_exchange, fraud_type: null, risk_level: low}

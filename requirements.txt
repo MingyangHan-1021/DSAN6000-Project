@@ -1,0 +1,9 @@
+pandas
+pyarrow
+numpy
+pyyaml
+duckdb
+
+# Later Spark and S3 work. Not required to build the local data.
+# pyspark
+# boto3

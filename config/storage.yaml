@@ -1,0 +1,8 @@
+# local writes under local_root. s3 is a placeholder until the bucket exists.
+# Switch backend to s3 only after s3_bucket and s3_prefix are real values.
+# Those two values may also be overridden by the S3_BUCKET and S3_PREFIX
+# environment variables. Do not put AWS keys in this file.
+backend: local
+local_root: data
+s3_bucket: TODO
+s3_prefix: TODO

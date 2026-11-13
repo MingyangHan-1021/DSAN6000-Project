@@ -1,0 +1,23 @@
+# Read-only inputs. The script copies them into data/raw and does not modify the source.
+inputs:
+  train: ../mid-term/data/train.parquet
+  test: ../mid-term/data/test.parquet
+  intents: ../mid-term/intents.csv
+
+raw_names:
+  train: train.parquet
+  test: test.parquet
+  intents: intents.csv
+
+taxonomy: config/intent_taxonomy.yaml
+
+outputs:
+  clean: processed/banking77_clean.parquet
+  dim_intent: processed/dim_intent.parquet
+
+# Same SCD2 defaults as the midterm practice dim_intent.
+# 9999-12-31 means the intent is still in the catalog.
+dim_intent:
+  valid_from: "2020-01-01"
+  valid_to: "9999-12-31"
+  intent_set_version: 1

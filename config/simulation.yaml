@@ -1,0 +1,197 @@
+# All stream parameters live here. Do not hard-code sizes in the script.
+# seed 7 matches the midterm practice sample. Child streams are derived from it.
+
+seed: 7
+active_profile: dev
+label_keep_rate: 0.30
+label_source: manual
+intent_set_version: 1
+fraud_user_share: 0.08
+
+inputs:
+  clean: processed/banking77_clean.parquet
+  dim_intent: processed/dim_intent.parquet
+
+outputs:
+  messages: simulated/messages
+  users: simulated/users.parquet
+  daily_report: simulated/daily_report.parquet
+
+profiles:
+  dev:
+    n_users: 10000
+    n_messages: 500000
+    chunk_size: 100000
+  full:
+    n_users: 1000000
+    n_messages: 50000000
+    chunk_size: 1000000
+
+pattern_weights:
+  account_takeover: 0.25
+  money_mule: 0.20
+  card_testing: 0.20
+  location_anomaly: 0.20
+  night_activity: 0.15
+
+window:
+  start: "2026-10-01"
+  end: "2026-10-31"
+
+daytime:
+  hour_start: 8
+  hour_end: 20
+
+session_gap_minutes: 30
+min_away_km: 800
+
+ordinary_sessions:
+  size_min: 2
+  size_max: 5
+  span_minutes_min: 3
+  span_minutes_max: 25
+  place_attempts: 80
+  # Share of ordinary sessions in each clock window. The rest stay in daytime.
+  # Night sessions keep the small size above, so 00:00-05:00 is not fraud by itself.
+  normal_night_share: 0.03
+  night_hour_start: 0
+  night_hour_end: 5
+  normal_evening_share: 0.08
+  evening_hour_start: 20
+  evening_hour_end: 24
+  # Some ordinary sessions are a trip, not the location_anomaly burst.
+  normal_away_session_share: 0.03
+  # Some ordinary sessions use one intent that also appears in a fraud pattern.
+  # One intent only: not the takeover chain, and not the long card-testing burst.
+  sensitive_intent_share: 0.05
+  sensitive_intents:
+    - declined_card_payment
+    - disposable_card_limits
+    - receiving_money
+    - change_pin
+    - passcode_forgotten
+    - edit_personal_details
+    - beneficiary_not_allowed
+    - cancel_transfer
+    - transfer_not_received_by_recipient
+    - card_payment_not_recognised
+    - cash_withdrawal_not_recognised
+
+cities:
+  - {name: "New York", lat: 40.7128, lon: -74.0060}
+  - {name: "Chicago", lat: 41.8781, lon: -87.6298}
+  - {name: "Los Angeles", lat: 34.0522, lon: -118.2437}
+  - {name: "Houston", lat: 29.7604, lon: -95.3698}
+  - {name: "Phoenix", lat: 33.4484, lon: -112.0740}
+  - {name: "Philadelphia", lat: 39.9526, lon: -75.1652}
+  - {name: "San Diego", lat: 32.7157, lon: -117.1611}
+  - {name: "Dallas", lat: 32.7767, lon: -96.7970}
+  - {name: "Miami", lat: 25.7617, lon: -80.1918}
+  - {name: "Seattle", lat: 47.6062, lon: -122.3321}
+  - {name: "Boston", lat: 42.3601, lon: -71.0589}
+  - {name: "Denver", lat: 39.7392, lon: -104.9903}
+  - {name: "Atlanta", lat: 33.7490, lon: -84.3880}
+  - {name: "Minneapolis", lat: 44.9778, lon: -93.2650}
+
+# fraud_pattern is the simulated scheme on a message. It is not the same field
+# as dim_intent.fraud_type. A normal intent can still be flagged when the
+# timing, sequence, or city matches one of these rules.
+patterns:
+  # Account takeover: reset the credential, change the contact details, move the money.
+  # Banking77 has no "add beneficiary" intent. The last step uses beneficiary_not_allowed
+  # and the other transfer intents.
+  account_takeover:
+    window_minutes_min: 10
+    window_minutes_max: 40
+    background_min: 8
+    background_max: 20
+    steps:
+      - intents: [change_pin, passcode_forgotten]
+        n_min: 1
+        n_max: 2
+      - intents: [edit_personal_details]
+        n_min: 1
+        n_max: 2
+      - intents:
+          - beneficiary_not_allowed
+          - cancel_transfer
+          - transfer_not_received_by_recipient
+          - declined_transfer
+          - failed_transfer
+          - pending_transfer
+          - transfer_timing
+          - transfer_fee_charged
+        n_min: 2
+        n_max: 4
+
+  # Money mule: several incoming receipts, then a fast burst of outgoing transfers.
+  money_mule:
+    receive_intents: [receiving_money]
+    receive_min: 3
+    receive_max: 6
+    receive_span_minutes_min: 60
+    receive_span_minutes_max: 360
+    send_gap_minutes_min: 5
+    send_gap_minutes_max: 30
+    send_span_minutes_min: 15
+    send_span_minutes_max: 90
+    send_intents:
+      - beneficiary_not_allowed
+      - transfer_not_received_by_recipient
+      - cancel_transfer
+      - declined_transfer
+      - failed_transfer
+      - pending_transfer
+      - transfer_timing
+      - transfer_fee_charged
+    send_min: 3
+    send_max: 6
+    # Keep the anchor in the morning so the outgoing burst stays on the same calendar day.
+    receive_hour_end: 15
+    background_min: 8
+    background_max: 20
+
+  # Card testing: a short burst of declined payments mixed with limit questions.
+  card_testing:
+    intents: [declined_card_payment, top_up_limits, disposable_card_limits]
+    weights: [0.70, 0.15, 0.15]
+    n_min: 8
+    n_max: 15
+    window_minutes_min: 10
+    window_minutes_max: 30
+    background_min: 8
+    background_max: 20
+
+  # Impossible travel: history stays in the home city, then one session appears
+  # in a city at least min_away_km away.
+  location_anomaly:
+    intents:
+      - declined_card_payment
+      - pending_card_payment
+      - cash_withdrawal_not_recognised
+      - card_payment_not_recognised
+      - transfer_timing
+    n_min: 3
+    n_max: 8
+    window_minutes_min: 20
+    window_minutes_max: 90
+    history_day_fraction: 0.7
+    background_min: 10
+    background_max: 25
+
+  # Late-night cluster. Daytime messages from the same user are not flagged.
+  night_activity:
+    intents:
+      - declined_card_payment
+      - declined_transfer
+      - transfer_timing
+      - card_payment_fee_charged
+      - balance_not_updated_after_bank_transfer
+    n_min: 6
+    n_max: 12
+    hour_start: 0
+    hour_end: 5
+    window_hours_min: 1
+    window_hours_max: 3
+    background_min: 8
+    background_max: 20
