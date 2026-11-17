@@ -1,0 +1,8 @@
+{
+  "account_takeover": 584,
+  "app_fraud_money_mule": 579,
+  "card_compromise": 496,
+  "identity_kyc_bypass": 327,
+  "refund_chargeback_abuse": 492,
+  "virtual_card_abuse": 259
+}
