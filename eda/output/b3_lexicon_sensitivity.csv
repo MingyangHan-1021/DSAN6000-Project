@@ -1,0 +1,13 @@
+lexicon,risk_level,share
+brief only,low,0.03338263257975914
+brief only,medium,0.06878612716763005
+brief only,high,0.20932697403285638
+strict urgency,low,0.007077963236847665
+strict urgency,medium,0.027745664739884393
+strict urgency,high,0.017488076311605722
+current (3 groups),low,0.09919712655820832
+current (3 groups),medium,0.15144508670520232
+current (3 groups),high,0.2702702702702703
+broad (+plea),low,0.16723008662581873
+broad (+plea),medium,0.22601156069364162
+broad (+plea),high,0.38738738738738737

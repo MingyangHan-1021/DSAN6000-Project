@@ -1,0 +1,102 @@
+# Part B — English interpretations (Wenhao Zhou)
+
+Each figure ships with the image, 2–3 sentences of English reading (banking angle),
+and the code that produced it. Code: `eda/b1_confusion.py`, `eda/b2_keywords.py`,
+`eda/b3_urgency.py`; notebook: `eda/eda_B.ipynb`.
+
+## B1 — Intent confusion heat map (`figures/B_confusion_heatmap.png`)
+
+TF-IDF (1–2 grams) + multinomial logistic regression, trained on the 10,003 train
+messages and scored on the 3,080 test messages: accuracy 0.891, macro-F1 0.891.
+
+Ordering all 77 intents by journey stage shows that most confusion stays inside a stage
+(the dark blocks on the diagonal), so the model mostly hesitates between neighbours in the
+same customer journey rather than across the bank. The 20 most frequent pairs split into
+15 harmless and 5 dangerous ones; the dangerous five are the expensive ones:
+`virtual_card_not_working` read as `card_not_working`, `transfer_not_received_by_recipient`
+as `balance_not_updated_after_bank_transfer`, `beneficiary_not_allowed` as `failed_transfer`,
+`card_payment_not_recognised` as `extra_charge_on_statement`, and `pin_blocked` as
+`get_physical_card`. Each pushes a card-compromise or money-mule message into a routine
+servicing queue, so the customer is sent a help article instead of a fraud review, which is
+exactly where a bank loses money.
+
+Aggregating that cost over the whole test set gives the number that matters commercially:
+of the 880 messages whose intent is fraud-relevant, 56 (6.4%, 95% CI 4.9–8.2%) are predicted
+into an ordinary queue and a further 5 (0.6%) into a different fraud team, so roughly one in
+fifteen fraud-typed messages never reaches a fraud workflow. The loss is not evenly spread —
+`virtual_card_abuse` leaks 12.5% [8–20%], `card_compromise` 8.1% [5–13%] and
+`app_fraud_money_mule` 7.5% [4–13%], while `identity_kyc_bypass` leaks only 0.8% [0–5%],
+because identity questions ("verify me", "why verify") are worded unlike anything else.
+
+Two caveats belong next to these numbers. First, the test set is small: a 500-sample
+bootstrap keeps only the first six pairs in the top 20 more than 80% of the time, and three
+of the five "dangerous" pairs recur in fewer than half of the resamples, so they are
+suggestive patterns rather than an established ranking. Second, the sharpest text-only
+failure is the PIN cluster: "How do I get my PIN unlocked?" (`pin_blocked`, account takeover)
+and "I need my PIN" (`get_physical_card`, ordinary card logistics) share almost every word,
+so no bag-of-words model can separate a credential attack from a routine request without
+behavioural context.
+
+## B2 — Words and phrases that mark each fraud type (`figures/B_keywords_by_fraud_type.png`)
+
+Log-odds ratio with an informative Dirichlet prior (Monroe et al., "Fightin' Words"), each
+fraud type against the rest of the **train** messages; terms are unigrams and bigrams with
+token-level de-duplication, and only terms far past z = 1.96 are shown.
+
+Every fraud type has a vocabulary of its own: account takeover is built from `pin`, `change`,
+`details`, `phone`, `use app`; money-mule traffic from `transfer`, `transaction`, `cancel`,
+`wrong account`, `beneficiary`; card compromise from `recognise`, `withdrawal`, `stolen`,
+`didn't make`, `wallet`; refund abuse from `refund`, `item`, `bought`, `seller`, `reverted`;
+KYC bypass from `verify`, `verification`, `use account`, `identity`; and virtual-card abuse
+from `virtual`, `cards`, `restrictions`, `limits`. The business reading is that these markers
+are almost all product nouns and action verbs from the customer's own account journey — PIN,
+transfer, card, refund — rather than threats or abusive wording, so a bank should build one
+keyword layer per fraud typology instead of a single generic "fraud lexicon".
+
+The bottom panel asks whether those words are enough on their own, and the answer is no: used
+as a standalone rule the terms recover 77% of fraud-relevant test messages, but only 29% of
+the messages they flag are genuinely of that type, so the rule would send roughly 1,700
+innocent customers into a fraud review to catch 678 real cases. Two types behave very
+differently — `identity_kyc_bypass` is close to usable (84% recall, 63% precision) because
+"verify / identity" appears almost nowhere else, while `card_compromise` catches 76% of its
+messages but is wrong 86% of the time, since an unrecognised card payment is phrased exactly
+like an ordinary card complaint. That gap is the quantitative reason the fraud model has to
+put behaviour on top of text: the vocabulary tells you the customer is talking about a card,
+only the surrounding behaviour tells you whether the card was used by someone else.
+
+## B3 — Urgency and emotion by risk level (`figures/B_urgency_by_risk.png`)
+
+A hand-built lexicon from the brief — time pressure (`immediately`, `urgent`, `asap`),
+distress (`help`, `worried`, `scared`) and incident (`someone`, `stolen`, `fraud`) — flags
+each of the 13,083 messages, and the share carrying a term is compared across intent risk
+levels with Wilson intervals and a chi-square test.
+
+The intuition that fraud sounds urgent is only half true. Time-pressure words are flat —
+4.1% of low-risk messages, 6.1% of medium and 4.5% of high (p = 7e-4 but non-monotonic and
+a two-point difference) — so a rule that escalates "urgent" language would spend its capacity
+on the wrong customers. The risk gradient comes almost entirely from incident words
+(`someone`, `stolen`, `fraud`): 0.8% of low-risk, 0.7% of medium and 18.3% of high-risk
+messages, with distress words in between (6.0% / 11.0% / 10.7%); overall 9.9% of ordinary
+messages carry some urgency term against 27.0% of high-risk ones. That aggregate hides the
+source: almost all of it is `card_compromise` (39.2% incident words), and two fraud types are
+*quieter than ordinary customers* — `virtual_card_abuse` 5.8% and `identity_kyc_bypass` 4.3%
+against 9.9% — because people ask about a virtual-card limit or a verification step in a
+perfectly calm voice.
+
+The risk label itself is a weak proxy, which panel (d) shows directly. Among the 12 high-risk
+intents the share ranges from 1.9% (`why_verify_identity`) to 85.7% (`compromised_card`), with
+a median of 18.7%; among the 55 low-risk intents it ranges from 0% to 35.8% with a median of
+7.8%. The single most "urgent" intent in the whole corpus is a low-risk one — `terminate_account`
+at 35.8% — which out-scores 9 of the 12 high-risk intents, so "high risk" bundles stolen-card
+language together with calm PIN and identity questions. This is not an artefact of how the word
+list was drawn: brief-only terms give 3.3% / 6.9% / 20.9%, the current list 9.9% / 15.1% /
+27.0%, a broad list 16.7% / 22.6% / 38.7%, and a strict time-pressure-only list collapses to
+0.7% / 2.8% / 1.7% — the high-above-low ordering survives every variant except the strict one,
+which has almost no signal at all.
+
+Length does not explain the gap either: high-risk messages are no longer than ordinary ones
+(54 vs 57 characters), and the high-vs-low odds ratio rises from 3.35 to 4.80 once log length
+enters the model, while the medium-risk effect shrinks from 1.61 to 1.24, i.e. medium-risk
+messages mostly just say more. For the fraud model this means tone is a text-side feature that
+only fires for card compromise; identity, KYC and virtual-card abuse will have to be caught by
+what the user *does*, not by how loudly they complain.
