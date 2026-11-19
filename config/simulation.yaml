@@ -1,5 +1,6 @@
 # All stream parameters live here. Do not hard-code sizes in the script.
 # seed 7 matches the midterm practice sample. Child streams are derived from it.
+# All times are the user's local clock time.
 
 seed: 7
 active_profile: dev
@@ -7,6 +8,8 @@ label_keep_rate: 0.30
 label_source: manual
 intent_set_version: 1
 fraud_user_share: 0.08
+# Stream text is sampled only from this Banking77 split, so the test set stays unseen.
+source_split: train
 
 inputs:
   clean: processed/banking77_clean.parquet
@@ -17,15 +20,18 @@ outputs:
   users: simulated/users.parquet
   daily_report: simulated/daily_report.parquet
 
+# Each profile has its own date window.
 profiles:
   dev:
     n_users: 10000
     n_messages: 500000
     chunk_size: 100000
+    window: {start: "2026-10-01", end: "2026-10-31"}
   full:
     n_users: 1000000
     n_messages: 50000000
     chunk_size: 1000000
+    window: {start: "2025-11-01", end: "2026-10-31"}
 
 pattern_weights:
   account_takeover: 0.25
@@ -33,10 +39,6 @@ pattern_weights:
   card_testing: 0.20
   location_anomaly: 0.20
   night_activity: 0.15
-
-window:
-  start: "2026-10-01"
-  end: "2026-10-31"
 
 daytime:
   hour_start: 8
@@ -61,9 +63,10 @@ ordinary_sessions:
   evening_hour_end: 24
   # Some ordinary sessions are a trip, not the location_anomaly burst.
   normal_away_session_share: 0.03
-  # Some ordinary sessions use one intent that also appears in a fraud pattern.
+  # Some ordinary sessions use one intent that also appears in a fraud pattern,
+  # or one fraud-typed intent that ordinary customers (often victims) ask about.
   # One intent only: not the takeover chain, and not the long card-testing burst.
-  sensitive_intent_share: 0.05
+  sensitive_intent_share: 0.10
   sensitive_intents:
     - declined_card_payment
     - disposable_card_limits
@@ -76,6 +79,20 @@ ordinary_sessions:
     - transfer_not_received_by_recipient
     - card_payment_not_recognised
     - cash_withdrawal_not_recognised
+    # Fraud-typed intents that no pattern uses. Without these lines they never
+    # appear in the stream, although real customers ask about them often.
+    - compromised_card
+    - lost_or_stolen_card
+    - lost_or_stolen_phone
+    - pin_blocked
+    - verify_my_identity
+    - unable_to_verify_identity
+    - why_verify_identity
+    - get_disposable_virtual_card
+    - virtual_card_not_working
+    - request_refund
+    - Refund_not_showing_up
+    - "reverted_card_payment?"
 
 cities:
   - {name: "New York", lat: 40.7128, lon: -74.0060}
@@ -103,8 +120,8 @@ patterns:
   account_takeover:
     window_minutes_min: 10
     window_minutes_max: 40
-    background_min: 8
-    background_max: 20
+    background_min: 20
+    background_max: 65
     steps:
       - intents: [change_pin, passcode_forgotten]
         n_min: 1
@@ -148,8 +165,8 @@ patterns:
     send_max: 6
     # Keep the anchor in the morning so the outgoing burst stays on the same calendar day.
     receive_hour_end: 15
-    background_min: 8
-    background_max: 20
+    background_min: 20
+    background_max: 65
 
   # Card testing: a short burst of declined payments mixed with limit questions.
   card_testing:
@@ -159,11 +176,12 @@ patterns:
     n_max: 15
     window_minutes_min: 10
     window_minutes_max: 30
-    background_min: 8
-    background_max: 20
+    background_min: 20
+    background_max: 65
 
   # Impossible travel: history stays in the home city, then one session appears
-  # in a city at least min_away_km away.
+  # in a city at least min_away_km away. Each user's anomaly day is drawn across
+  # the whole window after min_history_days, and their home history comes before it.
   location_anomaly:
     intents:
       - declined_card_payment
@@ -175,7 +193,7 @@ patterns:
     n_max: 8
     window_minutes_min: 20
     window_minutes_max: 90
-    history_day_fraction: 0.7
+    min_history_days: 3
     background_min: 10
     background_max: 25
 
@@ -193,5 +211,5 @@ patterns:
     hour_end: 5
     window_hours_min: 1
     window_hours_max: 3
-    background_min: 8
-    background_max: 20
+    background_min: 20
+    background_max: 65

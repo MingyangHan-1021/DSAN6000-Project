@@ -1,8 +1,8 @@
 # Read-only inputs. The script copies them into data/raw and does not modify the source.
 inputs:
-  train: ../mid-term/data/train.parquet
-  test: ../mid-term/data/test.parquet
-  intents: ../mid-term/intents.csv
+  train: input/train.parquet
+  test: input/test.parquet
+  intents: input/intents.csv
 
 raw_names:
   train: train.parquet

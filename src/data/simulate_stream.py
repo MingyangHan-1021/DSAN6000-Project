@@ -6,6 +6,10 @@ Run from the repo root:
 
 `full` is about 50 million messages. It is implemented, but it runs only when
 you pass --profile full explicitly.
+
+All times in `received` and `received_ts` are the user's local clock time.
+Stream text is sampled only from the `source_split` split (train by default),
+so the Banking77 test set stays unseen.
 """
 
 from __future__ import annotations
@@ -118,7 +122,7 @@ class World:
     stages: list[dict]
     cities: list[dict]
     min_away_km: float
-    history_cut: int
+    min_history_days: int
     name_to_id: dict[str, int]
     label_keep_rate: float
     label_source: str
@@ -478,6 +482,10 @@ def build_location_anomaly(rng: np.random.Generator, user: UserPlan, world: Worl
     Real scheme: after a history of home-city use, the account shows up in
     a distant city (stolen session or impossible travel). Only the away
     session is flagged. Background messages stay in the home city.
+
+    Each user gets their own anomaly day, drawn across the whole window after
+    min_history_days. The user's home-city history is placed only before that
+    day (see build_user), so anomalies do not pile up at the end of the window.
     """
 
     spec = world.patterns["location_anomaly"]
@@ -485,14 +493,9 @@ def build_location_anomaly(rng: np.random.Generator, user: UserPlan, world: Worl
     away = pick_away(rng, user, world)
     intents = choose_names(rng, spec["intents"], count)
     window = int(rng.integers(spec["window_minutes_min"], spec["window_minutes_max"] + 1))
-    start = daytime_start(
-        rng,
-        world.day0,
-        world.history_cut,
-        world.n_days,
-        world.hour_start,
-        world.hour_end,
-    )
+    day = int(rng.integers(world.min_history_days, world.n_days))
+    user.pattern_plan["anomaly_day"] = day
+    start = daytime_start(rng, world.day0, day, day + 1, world.hour_start, world.hour_end)
     times = burst_times(rng, count, start, window)
     cols = new_cols()
     add_session(
@@ -623,7 +626,8 @@ def build_user(user: UserPlan, world: World) -> dict[str, list]:
     ordinary_n = user.n_messages - user.n_fraud_messages
     day_lo, day_hi = 0, world.n_days
     if user.persona == "location_anomaly":
-        day_lo, day_hi = 0, world.history_cut
+        # Home-city history happens only before this user's anomaly day.
+        day_lo, day_hi = 0, int(user.pattern_plan["anomaly_day"])
     if ordinary_n:
         parts.append(build_ordinary(rng, user, ordinary_n, world, day_lo, day_hi, blocked))
     cols = concat_cols(parts)
@@ -689,6 +693,12 @@ def validate_config(cfg: dict) -> str:
         raise SystemExit("fraud_user_share must be between 0 and 1")
     if not isinstance(cfg["label_source"], str) or not cfg["label_source"].isidentifier():
         raise SystemExit("label_source must be a simple token such as manual")
+    if str(cfg.get("source_split", "train")) not in {"train", "test"}:
+        raise SystemExit("source_split must be train or test")
+    for name, size in cfg["profiles"].items():
+        window = size.get("window", cfg.get("window"))
+        if window is None or "start" not in window or "end" not in window:
+            raise SystemExit(f"profile {name!r} needs a window with start and end")
     patterns = cfg["patterns"]
     weights = cfg["pattern_weights"]
     if set(patterns) != set(BUILDERS) or set(weights) != set(BUILDERS):
@@ -778,11 +788,13 @@ def validate_config(cfg: dict) -> str:
         raise SystemExit("card_testing weights must match intents")
     _require_keys(
         patterns["location_anomaly"],
-        ["intents", "n_min", "n_max", "window_minutes_min", "window_minutes_max", "history_day_fraction", "background_min", "background_max"],
+        ["intents", "n_min", "n_max", "window_minutes_min", "window_minutes_max", "min_history_days", "background_min", "background_max"],
         "location_anomaly",
     )
     if int(patterns["location_anomaly"]["background_min"]) < 1:
         raise SystemExit("location_anomaly needs background history")
+    if int(patterns["location_anomaly"]["min_history_days"]) < 1:
+        raise SystemExit("location_anomaly min_history_days must be at least 1")
     _require_keys(
         patterns["night_activity"],
         ["intents", "n_min", "n_max", "hour_start", "hour_end", "window_hours_min", "window_hours_max", "background_min", "background_max"],
@@ -889,12 +901,17 @@ def allocate_users(cfg: dict, profile: str, master: np.random.Generator) -> list
     return filled
 
 
-def load_world(cfg: dict, plans_seed: int) -> World:
+def load_world(cfg: dict, plans_seed: int, profile: str) -> World:
     clean_path = locate(cfg["inputs"]["clean"]).require_local()
     dim_path = locate(cfg["inputs"]["dim_intent"]).require_local()
     if not clean_path.is_file() or not dim_path.is_file():
         raise SystemExit("Run python src/data/prepare_banking77.py before the simulator.")
     clean = pd.read_parquet(clean_path)
+    # Only sample stream text from one split, so the Banking77 test set stays unseen.
+    source_split = str(cfg.get("source_split", "train"))
+    clean = clean[clean["split"] == source_split].reset_index(drop=True)
+    if clean.empty:
+        raise SystemExit(f"No sentences found for source_split {source_split!r}")
     dim = pd.read_parquet(dim_path)
     pools = {
         str(name): group["text"].to_numpy()
@@ -915,19 +932,25 @@ def load_world(cfg: dict, plans_seed: int) -> World:
             stages.append({"name": str(stage), "intents": names})
     if not stages:
         raise SystemExit("No ordinary journey stages are available for normal users")
-    start = np.datetime64(str(cfg["window"]["start"]), "D")
-    end = np.datetime64(str(cfg["window"]["end"]), "D")
+    missing_stage = sorted({name for stage in stages for name in stage["intents"]} - set(pools))
+    if missing_stage:
+        raise SystemExit(f"Ordinary stage intents are not in banking77_clean: {missing_stage}")
+    # Each profile has its own window: dev is one month, full is one year.
+    window = cfg["profiles"][profile].get("window", cfg.get("window"))
+    if window is None:
+        raise SystemExit(f"No window set for profile {profile!r}")
+    start = np.datetime64(str(window["start"]), "D")
+    end = np.datetime64(str(window["end"]), "D")
     n_days = int((end - start) / np.timedelta64(1, "D")) + 1
     if n_days < 2:
         raise SystemExit("window must cover at least two days")
-    fraction = float(cfg["patterns"]["location_anomaly"]["history_day_fraction"])
-    history_cut = int(n_days * fraction)
-    if history_cut <= 0 or history_cut >= n_days:
-        raise SystemExit("history_day_fraction leaves no days on one side of the split")
+    min_history_days = int(cfg["patterns"]["location_anomaly"]["min_history_days"])
+    if not 1 <= min_history_days < n_days:
+        raise SystemExit("min_history_days must leave at least one day for the anomaly")
     sessions_cfg = cfg["ordinary_sessions"]
     return World(
         seed=plans_seed,
-        day0=np.datetime64(str(cfg["window"]["start"]), "s"),
+        day0=np.datetime64(str(window["start"]), "s"),
         n_days=n_days,
         hour_start=int(cfg["daytime"]["hour_start"]),
         hour_end=int(cfg["daytime"]["hour_end"]),
@@ -950,7 +973,7 @@ def load_world(cfg: dict, plans_seed: int) -> World:
         stages=stages,
         cities=cfg["cities"],
         min_away_km=float(cfg["min_away_km"]),
-        history_cut=history_cut,
+        min_history_days=min_history_days,
         name_to_id={str(intent): int(intent_id) for intent_id, intent in zip(dim["intent_id"], dim["intent"])},
         label_keep_rate=float(cfg["label_keep_rate"]),
         label_source=str(cfg["label_source"]),
@@ -1162,13 +1185,15 @@ def print_summary(messages_dir: Path, users_path: Path, report: pd.DataFrame, la
 
 def generate(cfg: dict, profile: str) -> None:
     size = cfg["profiles"][profile]
+    window = size.get("window", cfg.get("window"))
     print(
         f"profile={profile} users={size['n_users']} messages={size['n_messages']} "
-        f"seed={cfg['seed']}"
+        f"window={window['start']}..{window['end']} "
+        f"source_split={cfg.get('source_split', 'train')} seed={cfg['seed']}"
     )
     master = np.random.default_rng(np.random.SeedSequence([int(cfg["seed"]), 0]))
     plans = allocate_users(cfg, profile, master)
-    world = load_world(cfg, int(cfg["seed"]))
+    world = load_world(cfg, int(cfg["seed"]), profile)
     fraud_rows = sum(plan.n_fraud_messages for plan in plans)
     print(
         f"planned fraud messages={fraud_rows} "
