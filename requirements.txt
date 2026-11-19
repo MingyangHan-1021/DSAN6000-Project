@@ -4,6 +4,14 @@ numpy
 pyyaml
 duckdb
 
+# Part A semantic map (eda/eda_A.ipynb).
+matplotlib
+plotly
+sentence-transformers
+umap-learn
+kaleido
+scikit-learn
+
 # Later Spark and S3 work. Not required to build the local data.
 # pyspark
 # boto3
