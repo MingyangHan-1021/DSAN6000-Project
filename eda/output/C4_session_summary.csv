@@ -1,5 +1,5 @@
 group,sessions,median_messages,max_messages,median_minutes,p90_minutes
-normal,146302,3.0,5,6.0,14.8
+normal,146256,3.0,5,6.0,14.7
 account_takeover,215,6.0,8,16.5,29.0
 money_mule,147,9.0,12,164.1,305.3
 card_testing,174,11.0,15,17.0,24.4

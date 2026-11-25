@@ -1,6 +1,6 @@
 # Generated data. Rebuild with the scripts in src/data/. Do not commit these.
 # Leading slash: only the top-level data folder, not src/data/.
-/data/
+/data/simulated/
 
 # Raw Banking77 inputs ARE committed (input/*.parquet, input/intents.csv).
 # The .arrow copies are duplicates of the parquet files, so skip them.
