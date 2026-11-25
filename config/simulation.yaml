@@ -194,8 +194,8 @@ patterns:
     window_minutes_min: 20
     window_minutes_max: 90
     min_history_days: 3
-    background_min: 10
-    background_max: 25
+    background_min: 20
+    background_max: 65
 
   # Late-night cluster. Daytime messages from the same user are not flagged.
   night_activity:

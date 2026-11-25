@@ -1,0 +1,7 @@
+persona,users,all_messages,fraud_messages,msgs_per_user,share_of_fraud_messages
+normal,920000,46355980,0,50.4,0.0
+account_takeover,19927,966714,119506,48.5,0.1854
+card_testing,16127,871015,185374,54.0,0.2876
+money_mule,16116,830000,145005,51.5,0.225
+location_anomaly,15962,366606,87659,23.0,0.136
+night_activity,11868,609685,107045,51.4,0.1661

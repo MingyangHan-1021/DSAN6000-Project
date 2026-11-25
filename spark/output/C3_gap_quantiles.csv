@@ -1,0 +1,13 @@
+scope,group,n,p10_s,median_s,p90_s
+between_sessions,normal,13635242,189647,1303476,4552331
+between_sessions,location_anomaly,15962,178812,1531381,6552256
+between_sessions,account_takeover,18286,247786,1582461,5352065
+between_sessions,night_activity,10829,234654,1605386,5338771
+between_sessions,money_mule,14799,247154,1611624,5366868
+between_sessions,card_testing,14804,252172,1617372,5361632
+within_session,card_testing,169247,10,64,222
+within_session,normal,34725489,17,115,433
+within_session,account_takeover,99579,22,143,495
+within_session,location_anomaly,71697,48,327,1153
+within_session,night_activity,95177,66,450,1688
+within_session,money_mule,128889,102,841,3397
