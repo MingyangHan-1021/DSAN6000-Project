@@ -1,0 +1,9 @@
+,seconds
+train pipeline,49.1
+evaluate accuracy,1.0
+evaluate f1,0.1
+evaluate weightedPrecision,0.1
+evaluate weightedRecall,0.1
+split labeled / unlabeled,0.5
+score and write predictions,9.3
+summarise predictions,0.6

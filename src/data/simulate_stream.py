@@ -120,6 +120,7 @@ class World:
     sensitive_intents: list[str]
     pools: dict[str, np.ndarray]
     stages: list[dict]
+    stage_cum: np.ndarray
     cities: list[dict]
     min_away_km: float
     min_history_days: int
@@ -341,7 +342,11 @@ def build_ordinary(
             intent = world.sensitive_intents[int(rng.integers(0, len(world.sensitive_intents)))]
             intents = [intent] * size
         else:
-            stage = world.stages[int(rng.integers(0, len(world.stages)))]
+            # Pick a journey stage in proportion to how many intents it holds, so every
+            # ordinary intent is about equally common (a uniform stage pick would make
+            # one-intent stages such as `limits` five times more common than the rest).
+            index = int(np.searchsorted(world.stage_cum, float(rng.random()), side="right"))
+            stage = world.stages[min(index, len(world.stages) - 1)]
             intents = session_intents(rng, stage["intents"], size)
         if float(rng.random()) < world.away_session_share:
             away = pick_away(rng, user, world)
@@ -932,6 +937,8 @@ def load_world(cfg: dict, plans_seed: int, profile: str) -> World:
             stages.append({"name": str(stage), "intents": names})
     if not stages:
         raise SystemExit("No ordinary journey stages are available for normal users")
+    stage_sizes = np.array([len(stage["intents"]) for stage in stages], dtype=float)
+    stage_cum = np.cumsum(stage_sizes / stage_sizes.sum())
     missing_stage = sorted({name for stage in stages for name in stage["intents"]} - set(pools))
     if missing_stage:
         raise SystemExit(f"Ordinary stage intents are not in banking77_clean: {missing_stage}")
@@ -971,6 +978,7 @@ def load_world(cfg: dict, plans_seed: int, profile: str) -> World:
         sensitive_intents=sensitive,
         pools=pools,
         stages=stages,
+        stage_cum=stage_cum,
         cities=cfg["cities"],
         min_away_km=float(cfg["min_away_km"]),
         min_history_days=min_history_days,

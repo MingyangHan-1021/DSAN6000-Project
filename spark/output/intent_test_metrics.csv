@@ -1,0 +1,5 @@
+,value
+accuracy,0.8445
+f1,0.8449
+weightedPrecision,0.8517
+weightedRecall,0.8445
