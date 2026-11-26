@@ -1,0 +1,29 @@
+project:
+  type: manuscript
+  output-dir: _site
+
+manuscript:
+  article: index.qmd
+  manuscript-url: https://MingyangHan-1021.github.io/DSAN6000-Project/
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    link-external-newwindow: true
+    notebook-links: false
+  pdf:
+    toc: true
+    number-sections: true
+    documentclass: article
+    papersize: letter
+    fontsize: 11pt
+    geometry:
+      - margin=1in
+
+execute:
+  enabled: false
+
+lang: en

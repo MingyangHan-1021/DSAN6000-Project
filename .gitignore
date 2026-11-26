@@ -18,3 +18,7 @@ __pycache__/
 
 # Local matplotlib cache (MPLCONFIGDIR)
 .cache/
+
+/.quarto/
+/_site/
+**/*.quarto_ipynb
