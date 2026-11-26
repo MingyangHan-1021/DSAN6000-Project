@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="generator" content="quarto-1.11.9">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+    <title>Spark Cluster Run: Banking77 Fraud Stream (full profile)</title>
+    <style>
+      /* Default styles provided by pandoc.
+      ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+      */
+      span.smallcaps{font-variant: small-caps;}
+      div.columns{display: flex; gap: 1.5em;}
+      div.column{flex: auto;}
+      @media screen {
+      div.columns{gap: min(4vw, 1.5em);}
+      div.column{overflow-x: auto;}
+      }
+      div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+      ul.task-list{list-style: none;}
+      ul.task-list li input[type="checkbox"] {
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+        vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      html { -webkit-text-size-adjust: 100%; }
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      .sourceCode { overflow: visible; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+        }
+      pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+    </style>
+
+    <style>
+      body.hypothesis-enabled #quarto-embed-header {
+        padding-right: 36px;
+      }
+
+      #quarto-embed-header {
+        height: 3em;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: solid 1px;
+      }
+
+      #quarto-embed-header h6 {
+        font-size: 1.1em;
+        padding-top: 0.6em;
+        margin-left: 1em;
+        margin-right: 1em;
+        font-weight: 400;
+      }
+
+      #quarto-embed-header a.quarto-back-link,
+      #quarto-embed-header a.quarto-download-embed {
+        font-size: 0.8em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+        margin-left: 1em;
+        margin-right: 1em;
+      }
+
+      .quarto-back-container {
+        padding-left: 0.5em;
+        display: flex;
+      }
+
+      .headroom {
+          will-change: transform;
+          transition: transform 200ms linear;
+      }
+
+      .headroom--pinned {
+          transform: translateY(0%);
+      }
+
+      .headroom--unpinned {
+          transform: translateY(-100%);
+      }      
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script>
+    window.document.addEventListener("DOMContentLoaded", function () {
+
+      var header = window.document.querySelector("#quarto-embed-header");
+      // Inside the site header, the site navigation offsets the content
+      // and manages headroom
+      const inSiteHeader = header.parentElement.id === "quarto-header";
+      if (!inSiteHeader) {
+        const titleBannerEl = window.document.querySelector("body > #title-block-header");
+        if (titleBannerEl) {
+          titleBannerEl.style.paddingTop = header.clientHeight + "px";
+        }
+        const contentEl = window.document.getElementById('quarto-content');
+        for (const child of contentEl.children) {
+          child.style.paddingTop = header.clientHeight + "px";
+          child.style.marginTop = "1em";
+        }
+      }
+
+      // Use the article root if the `back` call doesn't work. This isn't perfect
+      // but should typically work
+      window.quartoBackToArticle = () => {
+        var currentUrl = window.location.href;
+        window.history.back();
+        setTimeout(() => {
+            // if location was not changed in 100 ms, then there is no history back
+            if(currentUrl === window.location.href){              
+                // redirect to site root
+                window.location.href = "...html";
+            }
+        }, 100);
+      }
+
+      if (!inSiteHeader) {
+        const headroom = new window.Headroom(header, {
+          tolerance: 5,
+          onPin: function () {
+          },
+          onUnpin: function () {
+          },
+        });
+        headroom.init();
+      }
+    });
+    </script>
+
+    
+<script src="../site_libs/manuscript-notebook/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-4f411e114d711e524ac8968afe1debc7.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+     <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>  
+      </head>
+
+  <body class="quarto-notebook quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+    <nav id="quarto-embed-header" class="headroom fixed-top bg-primary" aria-labelledby="quarto-embed-title">
+
+      <a href="...html" onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link"><i class="bi bi-caret-left"></i> Back to Article</a>
+      <h6 id="quarto-embed-title"><i class="bi bi-journal-code"></i> Spark Cluster Run: Banking77 Fraud Stream (full profile)</h6>
+
+            <a href="../spark/spark_cluster.ipynb" class="btn btn-primary quarto-download-embed" download="spark_cluster.ipynb">Download Notebook</a>
+          </nav>
+
+     <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Spark Cluster Run: Banking77 Fraud Stream (full profile)</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+        
+        <div class="quarto-title-meta">
+
+                
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      </div>
+    </div>
+
+
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#raw-stream-as-written-by-the-generator" id="toc-raw-stream-as-written-by-the-generator" class="nav-link active" data-scroll-target="#raw-stream-as-written-by-the-generator"><span class="header-section-number">1</span> 1. Raw stream as written by the generator</a></li>
+  <li><a href="#compact-to-one-file-per-day-and-write-back-to-s3" id="toc-compact-to-one-file-per-day-and-write-back-to-s3" class="nav-link" data-scroll-target="#compact-to-one-file-per-day-and-write-back-to-s3"><span class="header-section-number">2</span> 2. Compact to one file per day and write back to S3</a></li>
+  <li><a href="#part-c-aggregations-on-the-full-stream" id="toc-part-c-aggregations-on-the-full-stream" class="nav-link" data-scroll-target="#part-c-aggregations-on-the-full-stream"><span class="header-section-number">3</span> 3. Part C aggregations on the full stream</a></li>
+  <li><a href="#message-gaps-window-function" id="toc-message-gaps-window-function" class="nav-link" data-scroll-target="#message-gaps-window-function"><span class="header-section-number">3.1</span> Message gaps (window function)</a></li>
+  <li><a href="#sessions" id="toc-sessions" class="nav-link" data-scroll-target="#sessions"><span class="header-section-number">3.2</span> Sessions</a></li>
+  <li><a href="#numbers-for-the-spark-1-pager" id="toc-numbers-for-the-spark-1-pager" class="nav-link" data-scroll-target="#numbers-for-the-spark-1-pager"><span class="header-section-number">4</span> 4. Numbers for the Spark 1-pager</a></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content" tabindex="-1">      
+
+       <div id="54c14ddf" class="cell markdown">
+<p>This notebook runs on the <strong>master EC2 instance</strong> and uses the 3-worker standalone Spark cluster.</p>
+<ol type="1">
+<li>Connect to the cluster (same setup as HW7)</li>
+<li>Read the raw simulated stream from S3 (many small files) and time it</li>
+<li>Compact the stream to one Parquet file per day and write it back to S3</li>
+<li>Re-read the compacted data and time it again</li>
+<li>Run the Part C aggregations (overview, message gaps, sessions) on the full stream</li>
+<li>Save small result tables for the Spark 1-pager</li>
+</ol>
+<p>Only small aggregated results come back to the driver; the 50M-row stream stays on the cluster.</p>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div id="8a81eec4" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession, Window</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> functions <span class="im">as</span> F</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Settings ----</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>BUCKET <span class="op">=</span> <span class="st">"dsan6000-banking77-mh"</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>LOCAL_TEST <span class="op">=</span> <span class="va">False</span>                 <span class="co"># True only for a laptop test with local files</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> LOCAL_TEST:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    MASTER <span class="op">=</span> <span class="st">"local[*]"</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    ROOT <span class="op">=</span> Path.cwd().parent <span class="cf">if</span> Path.cwd().name <span class="op">==</span> <span class="st">"spark"</span> <span class="cf">else</span> Path.cwd()</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    RAW <span class="op">=</span> (ROOT <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"simulated"</span>).as_posix()</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    OUT <span class="op">=</span> (ROOT <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"cluster_test"</span>).as_posix()</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    master_private_ip <span class="op">=</span> <span class="op">!</span>hostname <span class="op">-</span>I</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    MASTER <span class="op">=</span> <span class="ss">f"spark://</span><span class="sc">{</span>master_private_ip[<span class="dv">0</span>]<span class="sc">.</span>split()[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">:7077"</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    RAW <span class="op">=</span> <span class="ss">f"s3a://</span><span class="sc">{</span>BUCKET<span class="sc">}</span><span class="ss">/banking77/simulated"</span>          <span class="co"># uploaded with aws s3 sync</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    OUT <span class="op">=</span> <span class="ss">f"s3a://</span><span class="sc">{</span>BUCKET<span class="sc">}</span><span class="ss">/banking77"</span>                    <span class="co"># compacted data and results go here</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>LOCAL_OUT <span class="op">=</span> Path(<span class="st">"output"</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>LOCAL_OUT.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"master:"</span>, MASTER)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"raw data:"</span>, RAW)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>master: spark://172.31.46.151:7077
+raw data: s3a://dsan6000-banking77-mh/banking77/simulated</code></pre>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div id="870c8a5a" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>prev <span class="op">=</span> SparkSession.getActiveSession()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> prev <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    prev.stop()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>builder <span class="op">=</span> (</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    SparkSession.builder</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    .appName(<span class="st">"banking77-fraud-cluster"</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    .master(MASTER)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    .config(<span class="st">"spark.sql.session.timeZone"</span>, <span class="st">"UTC"</span>)          <span class="co"># received_ts is the user's local clock</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    .config(<span class="st">"spark.sql.shuffle.partitions"</span>, <span class="st">"48"</span>)         <span class="co"># 6 cores x 8; the default 200 is too many for this cluster</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> LOCAL_TEST:</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    builder <span class="op">=</span> (</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        builder</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        .config(<span class="st">"spark.jars.packages"</span>, <span class="st">"org.apache.hadoop:hadoop-aws:3.5.0"</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        .config(<span class="st">"spark.executor.memory"</span>, <span class="st">"4g"</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        .config(<span class="st">"spark.driver.memory"</span>, <span class="st">"2g"</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>spark <span class="op">=</span> builder.getOrCreate()</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>spark.sparkContext.setLogLevel(<span class="st">"WARN"</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"default parallelism (cores):"</span>, spark.sparkContext.defaultParallelism)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>timings <span class="op">=</span> {}</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> timed(name, fn):</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> time.time()</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> fn()</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    timings[name] <span class="op">=</span> <span class="bu">round</span>(time.time() <span class="op">-</span> start, <span class="dv">1</span>)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>timings[name]<span class="sc">}</span><span class="ss"> s"</span>)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>WARNING: Using incubator modules: jdk.incubator.vector
+:: loading settings :: url = jar:file:/home/ubuntu/venv/lib/python3.14/site-packages/pyspark/jars/ivy-2.5.3.jar!/org/apache/ivy/core/settings/ivysettings.xml
+Ivy Default Cache set to: /home/ubuntu/.ivy2.5.2/cache
+The jars for the packages stored in: /home/ubuntu/.ivy2.5.2/jars
+org.apache.hadoop#hadoop-aws added as a dependency
+:: resolving dependencies :: org.apache.spark#spark-submit-parent-fc6f0029-13dd-46f6-b43e-b8453ae5c5dc;1.0
+    confs: [default]
+    found org.apache.hadoop#hadoop-aws;3.5.0 in central
+    found software.amazon.awssdk#bundle;2.35.4 in central
+    found software.amazon.s3.analyticsaccelerator#analyticsaccelerator-s3;1.3.1 in central
+    found org.wildfly.openssl#wildfly-openssl;2.2.5.Final in central
+:: resolution report :: resolve 501ms :: artifacts dl 11ms
+    :: modules in use:
+    org.apache.hadoop#hadoop-aws;3.5.0 from central in [default]
+    org.wildfly.openssl#wildfly-openssl;2.2.5.Final from central in [default]
+    software.amazon.awssdk#bundle;2.35.4 from central in [default]
+    software.amazon.s3.analyticsaccelerator#analyticsaccelerator-s3;1.3.1 from central in [default]
+    ---------------------------------------------------------------------
+    |                  |            modules            ||   artifacts   |
+    |       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+    ---------------------------------------------------------------------
+    |      default     |   4   |   0   |   0   |   0   ||   4   |   0   |
+    ---------------------------------------------------------------------
+:: retrieving :: org.apache.spark#spark-submit-parent-fc6f0029-13dd-46f6-b43e-b8453ae5c5dc
+    confs: [default]
+    0 artifacts copied, 4 already retrieved (0kB/10ms)
+26/11/25 03:26:46 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>default parallelism (cores): 6</code></pre>
+</div>
+</div></div>
+<div id="a015fcc3" class="cell markdown">
+<section id="raw-stream-as-written-by-the-generator" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="raw-stream-as-written-by-the-generator"><span class="header-section-number">1</span> 1. Raw stream as written by the generator</h2>
+<p>The generator writes one small file per chunk per day (50 chunks x 365 days), the classic <em>small files problem</em>.</p>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [3]:</pre></div><div id="b8577799" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> read_messages(path):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> spark.read.option(<span class="st">"basePath"</span>, path).parquet(path)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Newer Spark reads received_ts as TIMESTAMP_NTZ; a plain timestamp keeps date arithmetic simple</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df.withColumn(<span class="st">"received_ts"</span>, F.col(<span class="st">"received_ts"</span>).cast(<span class="st">"timestamp"</span>))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> read_messages(<span class="ss">f"</span><span class="sc">{</span>RAW<span class="sc">}</span><span class="ss">/messages"</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>raw_files <span class="op">=</span> <span class="bu">len</span>(raw.inputFiles())</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>raw_rows <span class="op">=</span> timed(<span class="st">"raw: count rows"</span>, <span class="kw">lambda</span>: raw.count())</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"raw files: </span><span class="sc">{</span>raw_files<span class="sc">:,}</span><span class="ss">  rows: </span><span class="sc">{</span>raw_rows<span class="sc">:,}</span><span class="ss">  partitions: </span><span class="sc">{</span>raw<span class="sc">.</span>rdd<span class="sc">.</span>getNumPartitions()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>raw: count rows: 319.8 s
+raw files: 18,250  rows: 50,000,000  partitions: 589</code></pre>
+</div>
+</div></div>
+<div id="5cc8a07e" class="cell markdown">
+<section id="compact-to-one-file-per-day-and-write-back-to-s3" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="compact-to-one-file-per-day-and-write-back-to-s3"><span class="header-section-number">2</span> 2. Compact to one file per day and write back to S3</h2>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [4]:</pre></div><div id="7dd5f942" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compact():</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    (raw.repartition(<span class="st">"date"</span>)              <span class="co"># all rows of a day land in one task -&gt; one output file per day</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        .write.mode(<span class="st">"overwrite"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        .partitionBy(<span class="st">"date"</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        .parquet(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/compacted/messages"</span>))</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    spark.read.parquet(<span class="ss">f"</span><span class="sc">{</span>RAW<span class="sc">}</span><span class="ss">/users.parquet"</span>).write.mode(<span class="st">"overwrite"</span>).parquet(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/compacted/users"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>timed(<span class="st">"compact: rewrite to one file per day"</span>, compact)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>compact: rewrite to one file per day: 560.9 s</code></pre>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [5]:</pre></div><div id="6a020943" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>msgs <span class="op">=</span> read_messages(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/compacted/messages"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>users <span class="op">=</span> spark.read.parquet(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/compacted/users"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>compact_files <span class="op">=</span> <span class="bu">len</span>(msgs.inputFiles())</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>compact_rows <span class="op">=</span> timed(<span class="st">"compacted: count rows"</span>, <span class="kw">lambda</span>: msgs.count())</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"compacted files: </span><span class="sc">{</span>compact_files<span class="sc">:,}</span><span class="ss">  rows: </span><span class="sc">{</span>compact_rows<span class="sc">:,}</span><span class="ss">  partitions: </span><span class="sc">{</span>msgs<span class="sc">.</span>rdd<span class="sc">.</span>getNumPartitions()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> compact_rows <span class="op">==</span> raw_rows, <span class="st">"row count changed during compaction"</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>msgs <span class="op">=</span> msgs.withColumn(<span class="st">"group"</span>, F.coalesce(<span class="st">"fraud_pattern"</span>, F.lit(<span class="st">"normal"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[Stage 11:=====================================================&gt;  (21 + 1) / 22]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>compacted: count rows: 10.0 s
+compacted files: 365  rows: 50,000,000  partitions: 22</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+</div></div>
+<div id="75ea4ba1" class="cell markdown">
+<section id="part-c-aggregations-on-the-full-stream" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="part-c-aggregations-on-the-full-stream"><span class="header-section-number">3</span> 3. Part C aggregations on the full stream</h2>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [6]:</pre></div><div id="7b9a1d28" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>overview <span class="op">=</span> timed(<span class="st">"C1 overview"</span>, <span class="kw">lambda</span>: msgs.agg(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    F.count(<span class="st">"*"</span>).alias(<span class="st">"messages"</span>),</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    F.countDistinct(<span class="st">"user_id"</span>).alias(<span class="st">"users"</span>),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    F.countDistinct(<span class="st">"session_id"</span>).alias(<span class="st">"sessions"</span>),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">round</span>(F.avg(F.col(<span class="st">"label"</span>).isNotNull().cast(<span class="st">"int"</span>)), <span class="dv">4</span>).alias(<span class="st">"label_coverage"</span>),</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">round</span>(F.avg(F.col(<span class="st">"is_fraud"</span>).cast(<span class="st">"int"</span>)), <span class="dv">4</span>).alias(<span class="st">"fraud_message_rate"</span>),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">min</span>(<span class="st">"received_ts"</span>).alias(<span class="st">"first_message"</span>),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">max</span>(<span class="st">"received_ts"</span>).alias(<span class="st">"last_message"</span>),</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>).toPandas())</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>overview.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"C1_overview.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>overview.T.rename(columns<span class="op">=</span>{<span class="dv">0</span>: <span class="st">"value"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>C1 overview: 32.7 s</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">messages</th>
+<td>50000000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">users</th>
+<td>1000000</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">sessions</th>
+<td>14709922</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">label_coverage</th>
+<td>0.3</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">fraud_message_rate</th>
+<td>0.0129</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">first_message</th>
+<td>2025-11-01 00:00:01</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">last_message</th>
+<td>2026-10-31 23:58:58</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [7]:</pre></div><div id="5f892d5b" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>persona <span class="op">=</span> timed(<span class="st">"C1 persona table"</span>, <span class="kw">lambda</span>: users.groupBy(<span class="st">"persona"</span>).agg(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    F.count(<span class="st">"*"</span>).alias(<span class="st">"users"</span>),</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">sum</span>(<span class="st">"n_messages"</span>).alias(<span class="st">"all_messages"</span>),</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">sum</span>(<span class="st">"n_fraud_messages"</span>).alias(<span class="st">"fraud_messages"</span>),</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>).toPandas())</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>persona[<span class="st">"msgs_per_user"</span>] <span class="op">=</span> (persona[<span class="st">"all_messages"</span>] <span class="op">/</span> persona[<span class="st">"users"</span>]).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>persona[<span class="st">"share_of_fraud_messages"</span>] <span class="op">=</span> (persona[<span class="st">"fraud_messages"</span>] <span class="op">/</span> persona[<span class="st">"fraud_messages"</span>].<span class="bu">sum</span>()).<span class="bu">round</span>(<span class="dv">4</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>persona <span class="op">=</span> persona.sort_values(<span class="st">"users"</span>, ascending<span class="op">=</span><span class="va">False</span>).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>persona.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"C1_persona.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>persona</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[Stage 20:=============================&gt;                            (1 + 1) / 2]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>C1 persona table: 1.5 s</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">persona</th>
+<th data-quarto-table-cell-role="th">users</th>
+<th data-quarto-table-cell-role="th">all_messages</th>
+<th data-quarto-table-cell-role="th">fraud_messages</th>
+<th data-quarto-table-cell-role="th">msgs_per_user</th>
+<th data-quarto-table-cell-role="th">share_of_fraud_messages</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>normal</td>
+<td>920000</td>
+<td>46355980</td>
+<td>0</td>
+<td>50.4</td>
+<td>0.0000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>account_takeover</td>
+<td>19927</td>
+<td>966714</td>
+<td>119506</td>
+<td>48.5</td>
+<td>0.1854</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>card_testing</td>
+<td>16127</td>
+<td>871015</td>
+<td>185374</td>
+<td>54.0</td>
+<td>0.2876</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>money_mule</td>
+<td>16116</td>
+<td>830000</td>
+<td>145005</td>
+<td>51.5</td>
+<td>0.2250</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>location_anomaly</td>
+<td>15962</td>
+<td>366606</td>
+<td>87659</td>
+<td>23.0</td>
+<td>0.1360</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>night_activity</td>
+<td>11868</td>
+<td>609685</td>
+<td>107045</td>
+<td>51.4</td>
+<td>0.1661</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [8]:</pre></div><div id="d6dc2d09" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>daily <span class="op">=</span> timed(<span class="st">"C1 daily"</span>, <span class="kw">lambda</span>: msgs.groupBy(F.to_date(<span class="st">"received_ts"</span>).alias(<span class="st">"day"</span>)).agg(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    F.count(<span class="st">"*"</span>).alias(<span class="st">"messages"</span>),</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    F.avg(F.col(<span class="st">"is_fraud"</span>).cast(<span class="st">"int"</span>)).alias(<span class="st">"fraud_rate"</span>),</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>).orderBy(<span class="st">"day"</span>).toPandas())</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>daily.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"C1_daily.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"days: </span><span class="sc">{</span><span class="bu">len</span>(daily)<span class="sc">}</span><span class="ss">  fraud rate: mean </span><span class="sc">{</span>daily<span class="sc">.</span>fraud_rate<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss">, "</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"min </span><span class="sc">{</span>daily<span class="sc">.</span>fraud_rate<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2%}</span><span class="ss">, max </span><span class="sc">{</span>daily<span class="sc">.</span>fraud_rate<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>C1 daily: 13.0 s
+days: 365  fraud rate: mean 1.29%, min 1.06%, max 1.57%</code></pre>
+</div>
+</div></div>
+<div id="887ecb63" class="cell markdown">
+<section id="message-gaps-window-function" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="message-gaps-window-function"><span class="header-section-number">3.1</span> Message gaps (window function)</h3>
+<p><code>lag</code> over each user’s history ordered by time. This is the most expensive step: every user’s messages have to be shuffled onto one executor and sorted.</p>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [9]:</pre></div><div id="a26d618d" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> Window.partitionBy(<span class="st">"user_id"</span>).orderBy(<span class="st">"received_ts"</span>, <span class="st">"message_id"</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>gaps <span class="op">=</span> (</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    msgs.select(<span class="st">"user_id"</span>, <span class="st">"session_id"</span>, <span class="st">"message_id"</span>, <span class="st">"received_ts"</span>, <span class="st">"group"</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    .withColumn(<span class="st">"prev_ts"</span>, F.lag(<span class="st">"received_ts"</span>).over(w))</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    .withColumn(<span class="st">"prev_session"</span>, F.lag(<span class="st">"session_id"</span>).over(w))</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    .where(F.col(<span class="st">"prev_ts"</span>).isNotNull())</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    .withColumn(<span class="st">"gap_s"</span>, F.col(<span class="st">"received_ts"</span>).cast(<span class="st">"long"</span>) <span class="op">-</span> F.col(<span class="st">"prev_ts"</span>).cast(<span class="st">"long"</span>))</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    .withColumn(<span class="st">"scope"</span>, F.when(F.col(<span class="st">"session_id"</span>) <span class="op">==</span> F.col(<span class="st">"prev_session"</span>), <span class="st">"within_session"</span>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>                          .otherwise(<span class="st">"between_sessions"</span>))</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>gaps.explain()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Project [user_id#50L, session_id#51L, message_id#43L, received_ts#45, group#86, prev_ts#291, prev_session#292L, (cast(received_ts#45 as bigint) - cast(prev_ts#291 as bigint)) AS gap_s#293L, CASE WHEN (session_id#51L = prev_session#292L) THEN within_session ELSE between_sessions END AS scope#294]
+   +- Filter isnotnull(prev_ts#291)
+      +- Window [lag(received_ts#45, -1, null) windowspecdefinition(user_id#50L, received_ts#45 ASC NULLS FIRST, message_id#43L ASC NULLS FIRST, specifiedwindowframe(RowFrame, -1, -1)) AS prev_ts#291, lag(session_id#51L, -1, null) windowspecdefinition(user_id#50L, received_ts#45 ASC NULLS FIRST, message_id#43L ASC NULLS FIRST, specifiedwindowframe(RowFrame, -1, -1)) AS prev_session#292L], [user_id#50L], [received_ts#45 ASC NULLS FIRST, message_id#43L ASC NULLS FIRST]
+         +- Sort [user_id#50L ASC NULLS FIRST, received_ts#45 ASC NULLS FIRST, message_id#43L ASC NULLS FIRST], false, 0
+            +- Exchange hashpartitioning(user_id#50L, 48), ENSURE_REQUIREMENTS, [plan_id=457]
+               +- Project [user_id#50L, session_id#51L, message_id#43L, received_ts#45, coalesce(fraud_pattern#56, normal) AS group#86]
+                  +- FileScan parquet [message_id#43L,received_ts#45,user_id#50L,session_id#51L,fraud_pattern#56,date#57] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(1 paths)[s3a://dsan6000-banking77-mh/banking77/compacted/messages], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;message_id:bigint,received_ts:timestamp,user_id:bigint,session_id:bigint,fraud_pattern:str...
+
+</code></pre>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [10]:</pre></div><div id="58c7d89f" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>gap_q <span class="op">=</span> timed(<span class="st">"C3 gap quantiles (window function)"</span>, <span class="kw">lambda</span>: gaps.groupBy(<span class="st">"scope"</span>, <span class="st">"group"</span>).agg(</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    F.count(<span class="st">"*"</span>).alias(<span class="st">"n"</span>),</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    F.percentile_approx(<span class="st">"gap_s"</span>, [<span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span>], <span class="dv">1000</span>).alias(<span class="st">"q"</span>),</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>).toPandas())</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>gap_q[[<span class="st">"p10_s"</span>, <span class="st">"median_s"</span>, <span class="st">"p90_s"</span>]] <span class="op">=</span> pd.DataFrame(gap_q[<span class="st">"q"</span>].tolist(), index<span class="op">=</span>gap_q.index)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>gap_q <span class="op">=</span> gap_q.drop(columns<span class="op">=</span><span class="st">"q"</span>).sort_values([<span class="st">"scope"</span>, <span class="st">"median_s"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>gap_q.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"C3_gap_quantiles.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>gap_q</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[Stage 36:&gt;                                                         (0 + 1) / 1]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>C3 gap quantiles (window function): 52.1 s</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">scope</th>
+<th data-quarto-table-cell-role="th">group</th>
+<th data-quarto-table-cell-role="th">n</th>
+<th data-quarto-table-cell-role="th">p10_s</th>
+<th data-quarto-table-cell-role="th">median_s</th>
+<th data-quarto-table-cell-role="th">p90_s</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>between_sessions</td>
+<td>normal</td>
+<td>13635242</td>
+<td>189647</td>
+<td>1303476</td>
+<td>4552331</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>between_sessions</td>
+<td>location_anomaly</td>
+<td>15962</td>
+<td>178812</td>
+<td>1531381</td>
+<td>6552256</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>between_sessions</td>
+<td>account_takeover</td>
+<td>18286</td>
+<td>247786</td>
+<td>1582461</td>
+<td>5352065</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>between_sessions</td>
+<td>night_activity</td>
+<td>10829</td>
+<td>234654</td>
+<td>1605386</td>
+<td>5338771</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>between_sessions</td>
+<td>money_mule</td>
+<td>14799</td>
+<td>247154</td>
+<td>1611624</td>
+<td>5366868</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>between_sessions</td>
+<td>card_testing</td>
+<td>14804</td>
+<td>252172</td>
+<td>1617372</td>
+<td>5361632</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>within_session</td>
+<td>card_testing</td>
+<td>169247</td>
+<td>10</td>
+<td>64</td>
+<td>222</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>within_session</td>
+<td>normal</td>
+<td>34725489</td>
+<td>17</td>
+<td>115</td>
+<td>433</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>within_session</td>
+<td>account_takeover</td>
+<td>99579</td>
+<td>22</td>
+<td>143</td>
+<td>495</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>within_session</td>
+<td>location_anomaly</td>
+<td>71697</td>
+<td>48</td>
+<td>327</td>
+<td>1153</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>within_session</td>
+<td>night_activity</td>
+<td>95177</td>
+<td>66</td>
+<td>450</td>
+<td>1688</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>within_session</td>
+<td>money_mule</td>
+<td>128889</td>
+<td>102</td>
+<td>841</td>
+<td>3397</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div id="03584e8a" class="cell markdown">
+<section id="sessions" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="sessions"><span class="header-section-number">3.2</span> Sessions</h3>
+<p>Session table built in Spark (one row per session), written to S3 as an intermediate table, then summarised.</p>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [11]:</pre></div><div id="84f97300" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>sessions <span class="op">=</span> msgs.groupBy(<span class="st">"session_id"</span>).agg(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    F.first(<span class="st">"group"</span>).alias(<span class="st">"group"</span>),</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    F.first(<span class="st">"user_id"</span>).alias(<span class="st">"user_id"</span>),</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    F.count(<span class="st">"*"</span>).alias(<span class="st">"n_messages"</span>),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    ((F.<span class="bu">max</span>(<span class="st">"received_ts"</span>).cast(<span class="st">"long"</span>) <span class="op">-</span> F.<span class="bu">min</span>(<span class="st">"received_ts"</span>).cast(<span class="st">"long"</span>)) <span class="op">/</span> <span class="dv">60</span>).alias(<span class="st">"duration_min"</span>),</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    F.countDistinct(<span class="st">"city"</span>).alias(<span class="st">"n_cities"</span>),</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>timed(<span class="st">"C4 write session table"</span>, <span class="kw">lambda</span>: sessions.write.mode(<span class="st">"overwrite"</span>).parquet(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/results/sessions"</span>))</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>sessions <span class="op">=</span> spark.read.parquet(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/results/sessions"</span>)</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>sess <span class="op">=</span> timed(<span class="st">"C4 session summary"</span>, <span class="kw">lambda</span>: sessions.groupBy(<span class="st">"group"</span>).agg(</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    F.count(<span class="st">"*"</span>).alias(<span class="st">"sessions"</span>),</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>    F.percentile_approx(<span class="st">"n_messages"</span>, <span class="fl">0.5</span>).alias(<span class="st">"median_messages"</span>),</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">max</span>(<span class="st">"n_messages"</span>).alias(<span class="st">"max_messages"</span>),</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">round</span>(F.percentile_approx(<span class="st">"duration_min"</span>, <span class="fl">0.5</span>), <span class="dv">1</span>).alias(<span class="st">"median_minutes"</span>),</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">round</span>(F.percentile_approx(<span class="st">"duration_min"</span>, <span class="fl">0.9</span>), <span class="dv">1</span>).alias(<span class="st">"p90_minutes"</span>),</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>).toPandas())</span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> [<span class="st">"normal"</span>, <span class="st">"account_takeover"</span>, <span class="st">"money_mule"</span>, <span class="st">"card_testing"</span>, <span class="st">"location_anomaly"</span>, <span class="st">"night_activity"</span>]</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>sess <span class="op">=</span> sess.set_index(<span class="st">"group"</span>).reindex(order).reset_index()</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>sess.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"C4_session_summary.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>sess</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>C4 write session table: 74.5 s</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[Stage 46:&gt;                                                         (0 + 1) / 1]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>C4 session summary: 12.5 s</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">group</th>
+<th data-quarto-table-cell-role="th">sessions</th>
+<th data-quarto-table-cell-role="th">median_messages</th>
+<th data-quarto-table-cell-role="th">max_messages</th>
+<th data-quarto-table-cell-role="th">median_minutes</th>
+<th data-quarto-table-cell-role="th">p90_minutes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>normal</td>
+<td>14629922</td>
+<td>3</td>
+<td>5</td>
+<td>6.0</td>
+<td>14.8</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>account_takeover</td>
+<td>19927</td>
+<td>6</td>
+<td>8</td>
+<td>16.7</td>
+<td>28.7</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>money_mule</td>
+<td>16116</td>
+<td>9</td>
+<td>12</td>
+<td>180.4</td>
+<td>296.5</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>card_testing</td>
+<td>16127</td>
+<td>11</td>
+<td>15</td>
+<td>16.4</td>
+<td>24.6</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>location_anomaly</td>
+<td>15962</td>
+<td>5</td>
+<td>8</td>
+<td>34.7</td>
+<td>62.6</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>night_activity</td>
+<td>11868</td>
+<td>9</td>
+<td>12</td>
+<td>95.9</td>
+<td>157.9</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div id="c9ebf6f2" class="cell markdown">
+<section id="numbers-for-the-spark-1-pager" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="numbers-for-the-spark-1-pager"><span class="header-section-number">4</span> 4. Numbers for the Spark 1-pager</h2>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [12]:</pre></div><div id="1d9c25c3" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>summary <span class="op">=</span> pd.Series({</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"messages"</span>: <span class="ss">f"</span><span class="sc">{</span>raw_rows<span class="sc">:,}</span><span class="ss">"</span>,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"users"</span>: <span class="ss">f"</span><span class="sc">{</span><span class="bu">int</span>(overview.loc[<span class="dv">0</span>, <span class="st">'users'</span>])<span class="sc">:,}</span><span class="ss">"</span>,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sessions"</span>: <span class="ss">f"</span><span class="sc">{</span><span class="bu">int</span>(overview.loc[<span class="dv">0</span>, <span class="st">'sessions'</span>])<span class="sc">:,}</span><span class="ss">"</span>,</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"raw files"</span>: <span class="ss">f"</span><span class="sc">{</span>raw_files<span class="sc">:,}</span><span class="ss">"</span>,</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"compacted files"</span>: <span class="ss">f"</span><span class="sc">{</span>compact_files<span class="sc">:,}</span><span class="ss">"</span>,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cores"</span>: spark.sparkContext.defaultParallelism,</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>}, name<span class="op">=</span><span class="st">"value"</span>).to_frame()</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>summary.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"run_summary.csv"</span>)</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>display(summary)</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>timing_table <span class="op">=</span> pd.Series(timings, name<span class="op">=</span><span class="st">"seconds"</span>).to_frame()</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>timing_table.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"timings.csv"</span>)</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>timing_table</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">messages</th>
+<td>50,000,000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">users</th>
+<td>1,000,000</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">sessions</th>
+<td>14,709,922</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">raw files</th>
+<td>18,250</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">compacted files</th>
+<td>365</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">cores</th>
+<td>6</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">seconds</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">raw: count rows</th>
+<td>319.8</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">compact: rewrite to one file per day</th>
+<td>560.9</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">compacted: count rows</th>
+<td>10.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">C1 overview</th>
+<td>32.7</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">C1 persona table</th>
+<td>1.5</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">C1 daily</th>
+<td>13.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">C3 gap quantiles (window function)</th>
+<td>52.1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">C4 write session table</th>
+<td>74.5</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">C4 session summary</th>
+<td>12.5</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div id="1d6fcad6" class="cell markdown">
+<p>Before stopping: take the screenshots (Master UI on 8080, Executors and SQL / DataFrame tabs on 4040). They disappear once the session stops.</p>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [13]:</pre></div><div id="ef5893f5" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>spark.stop()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div></div>
+     </main>
+<!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      const newWindowLabel = "(opens in a new tab)";
+      const newWindowNoteId = "quarto-ext-newwindow-label";
+      // Links reference one hidden label through aria-describedby, so the
+      // announcement never changes their accessible name.
+      var describeNewWindow = (link) => {
+        if (!window.document.getElementById(newWindowNoteId)) {
+          var newWindowNote = window.document.createElement("span");
+          newWindowNote.id = newWindowNoteId;
+          newWindowNote.hidden = true;
+          newWindowNote.textContent = newWindowLabel;
+          window.document.body.appendChild(newWindowNote);
+        }
+        var describedBy = (link.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+        if (!describedBy.includes(newWindowNoteId)) {
+          describedBy.push(newWindowNoteId);
+          link.setAttribute("aria-describedby", describedBy.join(" "));
+        }
+      }
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+            describeNewWindow(link);
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>  </div> <!-- /content --> 
+  
+</body></html>

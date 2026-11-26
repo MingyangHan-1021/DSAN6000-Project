@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="generator" content="quarto-1.11.9">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+    <title>Spark MLlib Intent Classifier: Banking77</title>
+    <style>
+      /* Default styles provided by pandoc.
+      ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+      */
+      span.smallcaps{font-variant: small-caps;}
+      div.columns{display: flex; gap: 1.5em;}
+      div.column{flex: auto;}
+      @media screen {
+      div.columns{gap: min(4vw, 1.5em);}
+      div.column{overflow-x: auto;}
+      }
+      div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+      ul.task-list{list-style: none;}
+      ul.task-list li input[type="checkbox"] {
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+        vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      html { -webkit-text-size-adjust: 100%; }
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      .sourceCode { overflow: visible; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+        }
+      pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+    </style>
+
+    <style>
+      body.hypothesis-enabled #quarto-embed-header {
+        padding-right: 36px;
+      }
+
+      #quarto-embed-header {
+        height: 3em;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: solid 1px;
+      }
+
+      #quarto-embed-header h6 {
+        font-size: 1.1em;
+        padding-top: 0.6em;
+        margin-left: 1em;
+        margin-right: 1em;
+        font-weight: 400;
+      }
+
+      #quarto-embed-header a.quarto-back-link,
+      #quarto-embed-header a.quarto-download-embed {
+        font-size: 0.8em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+        margin-left: 1em;
+        margin-right: 1em;
+      }
+
+      .quarto-back-container {
+        padding-left: 0.5em;
+        display: flex;
+      }
+
+      .headroom {
+          will-change: transform;
+          transition: transform 200ms linear;
+      }
+
+      .headroom--pinned {
+          transform: translateY(0%);
+      }
+
+      .headroom--unpinned {
+          transform: translateY(-100%);
+      }      
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script>
+    window.document.addEventListener("DOMContentLoaded", function () {
+
+      var header = window.document.querySelector("#quarto-embed-header");
+      // Inside the site header, the site navigation offsets the content
+      // and manages headroom
+      const inSiteHeader = header.parentElement.id === "quarto-header";
+      if (!inSiteHeader) {
+        const titleBannerEl = window.document.querySelector("body > #title-block-header");
+        if (titleBannerEl) {
+          titleBannerEl.style.paddingTop = header.clientHeight + "px";
+        }
+        const contentEl = window.document.getElementById('quarto-content');
+        for (const child of contentEl.children) {
+          child.style.paddingTop = header.clientHeight + "px";
+          child.style.marginTop = "1em";
+        }
+      }
+
+      // Use the article root if the `back` call doesn't work. This isn't perfect
+      // but should typically work
+      window.quartoBackToArticle = () => {
+        var currentUrl = window.location.href;
+        window.history.back();
+        setTimeout(() => {
+            // if location was not changed in 100 ms, then there is no history back
+            if(currentUrl === window.location.href){              
+                // redirect to site root
+                window.location.href = "...html";
+            }
+        }, 100);
+      }
+
+      if (!inSiteHeader) {
+        const headroom = new window.Headroom(header, {
+          tolerance: 5,
+          onPin: function () {
+          },
+          onUnpin: function () {
+          },
+        });
+        headroom.init();
+      }
+    });
+    </script>
+
+    
+<script src="../site_libs/manuscript-notebook/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-4f411e114d711e524ac8968afe1debc7.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+     <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>  
+      </head>
+
+  <body class="quarto-notebook quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+    <nav id="quarto-embed-header" class="headroom fixed-top bg-primary" aria-labelledby="quarto-embed-title">
+
+      <a href="...html" onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link"><i class="bi bi-caret-left"></i> Back to Article</a>
+      <h6 id="quarto-embed-title"><i class="bi bi-journal-code"></i> Spark MLlib Intent Classifier: Banking77</h6>
+
+            <a href="../spark/intent_classifier.ipynb" class="btn btn-primary quarto-download-embed" download="intent_classifier.ipynb">Download Notebook</a>
+          </nav>
+
+     <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Spark MLlib Intent Classifier: Banking77</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+        
+        <div class="quarto-title-meta">
+
+                
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      </div>
+    </div>
+
+
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#train-and-evaluate" id="toc-train-and-evaluate" class="nav-link active" data-scroll-target="#train-and-evaluate"><span class="header-section-number">1</span> 1. Train and evaluate</a></li>
+  <li><a href="#accuracy-for-fraud-relevant-intents" id="toc-accuracy-for-fraud-relevant-intents" class="nav-link" data-scroll-target="#accuracy-for-fraud-relevant-intents"><span class="header-section-number">2</span> 2. Accuracy for fraud-relevant intents</a></li>
+  <li><a href="#score-the-unlabeled-stream" id="toc-score-the-unlabeled-stream" class="nav-link" data-scroll-target="#score-the-unlabeled-stream"><span class="header-section-number">3</span> 3. Score the unlabeled stream</a></li>
+  <li><a href="#what-the-scoring-job-produced" id="toc-what-the-scoring-job-produced" class="nav-link" data-scroll-target="#what-the-scoring-job-produced"><span class="header-section-number">4</span> 4. What the scoring job produced</a></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content" tabindex="-1">      
+
+       <div id="f79c88d6" class="cell markdown">
+<p>This notebook trains a 77-class intent classifier with <strong>Spark MLlib</strong> and uses it to label the <strong>unlabeled</strong> messages in the simulated OLTP stream, following the vignette’s setup:</p>
+<ul>
+<li>messages that arrive <strong>with</strong> a manual intent label are training data</li>
+<li>messages that arrive <strong>without</strong> one are scored by the model</li>
+</ul>
+<p>Everything is written in PySpark, so the same code runs on a laptop (<code>local[*]</code>, dev sample) and on the EC2 cluster (S3 paths, full stream). When the course’s larger synthetic Banking77 messages are released, they can be dropped in by changing <code>TRAIN_PATH</code> or <code>STREAM_PATH</code>.</p>
+<p>Steps 1. Train on the Banking77 train split, evaluate on the held-out test split 2. Inspect accuracy for the fraud-relevant intents 3. Score every unlabeled message in the stream and save the predictions 4. Flag low-confidence predictions for human review</p>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [12]:</pre></div><div id="d56b176a" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> functions <span class="im">as</span> F</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml <span class="im">import</span> Pipeline, PipelineModel</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.feature <span class="im">import</span> RegexTokenizer, NGram, CountVectorizer, IDF, VectorAssembler</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.classification <span class="im">import</span> LogisticRegression</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.evaluation <span class="im">import</span> MulticlassClassificationEvaluator</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.functions <span class="im">import</span> vector_to_array</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Settings: the only lines to change on the cluster ----</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>ON_CLUSTER <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>BUCKET <span class="op">=</span> <span class="st">"dsan6000-banking77-mh"</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>ROOT <span class="op">=</span> Path.cwd().parent <span class="cf">if</span> Path.cwd().name <span class="op">==</span> <span class="st">"spark"</span> <span class="cf">else</span> Path.cwd()</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> ON_CLUSTER:</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    ip <span class="op">=</span> <span class="op">!</span>hostname <span class="op">-</span>I</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    MASTER <span class="op">=</span> <span class="ss">f"spark://</span><span class="sc">{</span>ip[<span class="dv">0</span>]<span class="sc">.</span>split()[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">:7077"</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    TRAIN_PATH <span class="op">=</span> <span class="ss">f"s3a://</span><span class="sc">{</span>BUCKET<span class="sc">}</span><span class="ss">/banking77/processed/banking77_clean.parquet"</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    DIM_PATH <span class="op">=</span> <span class="ss">f"s3a://</span><span class="sc">{</span>BUCKET<span class="sc">}</span><span class="ss">/banking77/processed/dim_intent.parquet"</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    STREAM_PATH <span class="op">=</span> <span class="ss">f"s3a://</span><span class="sc">{</span>BUCKET<span class="sc">}</span><span class="ss">/banking77/compacted/messages"</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    OUT <span class="op">=</span> <span class="ss">f"s3a://</span><span class="sc">{</span>BUCKET<span class="sc">}</span><span class="ss">/banking77/results"</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    MASTER <span class="op">=</span> <span class="st">"local[*]"</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    TRAIN_PATH <span class="op">=</span> (ROOT <span class="op">/</span> <span class="st">"data/processed/banking77_clean.parquet"</span>).as_posix()</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    DIM_PATH <span class="op">=</span> (ROOT <span class="op">/</span> <span class="st">"data/processed/dim_intent.parquet"</span>).as_posix()</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    STREAM_PATH <span class="op">=</span> (ROOT <span class="op">/</span> <span class="st">"data/simulated/messages"</span>).as_posix()</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    OUT <span class="op">=</span> (ROOT <span class="op">/</span> <span class="st">"data/simulated/results"</span>).as_posix()      <span class="co"># under data/simulated, so git ignores it</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>LOCAL_OUT <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"spark"</span> <span class="op">/</span> <span class="st">"output"</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>LOCAL_OUT.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>REVIEW_THRESHOLD <span class="op">=</span> <span class="fl">0.5</span>          <span class="co"># predictions below this confidence go to a human reviewer</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>builder <span class="op">=</span> (</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    SparkSession.builder.appName(<span class="st">"banking77-intent-classifier"</span>).master(MASTER)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    .config(<span class="st">"spark.sql.session.timeZone"</span>, <span class="st">"UTC"</span>)</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    .config(<span class="st">"spark.sql.shuffle.partitions"</span>, <span class="st">"48"</span>)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> ON_CLUSTER:</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    builder <span class="op">=</span> (builder</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>               .config(<span class="st">"spark.jars.packages"</span>, <span class="st">"org.apache.hadoop:hadoop-aws:3.5.0"</span>)</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>               .config(<span class="st">"spark.executor.memory"</span>, <span class="st">"4g"</span>))</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    builder <span class="op">=</span> builder.config(<span class="st">"spark.driver.memory"</span>, <span class="st">"4g"</span>)</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>spark <span class="op">=</span> builder.getOrCreate()</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>spark.sparkContext.setLogLevel(<span class="st">"WARN"</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"master:"</span>, MASTER, <span class="st">"| cores:"</span>, spark.sparkContext.defaultParallelism)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>timings <span class="op">=</span> {}</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> timed(name, fn):</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> time.time()</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> fn()</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    timings[name] <span class="op">=</span> <span class="bu">round</span>(time.time() <span class="op">-</span> start, <span class="dv">1</span>)</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>timings[name]<span class="sc">}</span><span class="ss"> s"</span>)</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/11/26 11:15:24 WARN Utils: Service 'SparkUI' could not bind on port 4040. Attempting port 4041.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>master: local[*] | cores: 8</code></pre>
+</div>
+</div></div>
+<div id="71bf4cbe" class="cell markdown">
+<section id="train-and-evaluate" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="train-and-evaluate"><span class="header-section-number">1</span> 1. Train and evaluate</h2>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [13]:</pre></div><div id="9a3f134a" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>clean <span class="op">=</span> spark.read.parquet(TRAIN_PATH)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>dim <span class="op">=</span> spark.read.parquet(DIM_PATH).select(</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    F.col(<span class="st">"intent_id"</span>).cast(<span class="st">"double"</span>).alias(<span class="st">"label"</span>), <span class="st">"intent"</span>, <span class="st">"fraud_type"</span>, <span class="st">"risk_level"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> clean.where(F.col(<span class="st">"split"</span>) <span class="op">==</span> <span class="st">"train"</span>).select(<span class="st">"text"</span>, F.col(<span class="st">"label"</span>).cast(<span class="st">"double"</span>))</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>test <span class="op">=</span> clean.where(F.col(<span class="st">"split"</span>) <span class="op">==</span> <span class="st">"test"</span>).select(<span class="st">"text"</span>, F.col(<span class="st">"label"</span>).cast(<span class="st">"double"</span>))</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"train: </span><span class="sc">{</span>train<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">  test: </span><span class="sc">{</span>test<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Words and word pairs, each weighted by TF-IDF, then a multinomial logistic regression.</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>pipeline <span class="op">=</span> Pipeline(stages<span class="op">=</span>[</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    RegexTokenizer(inputCol<span class="op">=</span><span class="st">"text"</span>, outputCol<span class="op">=</span><span class="st">"tokens"</span>, pattern<span class="op">=</span><span class="st">"[^a-z0-9']+"</span>, toLowercase<span class="op">=</span><span class="va">True</span>),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    NGram(n<span class="op">=</span><span class="dv">2</span>, inputCol<span class="op">=</span><span class="st">"tokens"</span>, outputCol<span class="op">=</span><span class="st">"bigrams"</span>),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    CountVectorizer(inputCol<span class="op">=</span><span class="st">"tokens"</span>, outputCol<span class="op">=</span><span class="st">"uni_tf"</span>, minDF<span class="op">=</span><span class="dv">2</span>),</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    CountVectorizer(inputCol<span class="op">=</span><span class="st">"bigrams"</span>, outputCol<span class="op">=</span><span class="st">"bi_tf"</span>, minDF<span class="op">=</span><span class="dv">2</span>),</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    IDF(inputCol<span class="op">=</span><span class="st">"uni_tf"</span>, outputCol<span class="op">=</span><span class="st">"uni_tfidf"</span>),</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    IDF(inputCol<span class="op">=</span><span class="st">"bi_tf"</span>, outputCol<span class="op">=</span><span class="st">"bi_tfidf"</span>),</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    VectorAssembler(inputCols<span class="op">=</span>[<span class="st">"uni_tfidf"</span>, <span class="st">"bi_tfidf"</span>], outputCol<span class="op">=</span><span class="st">"features"</span>),</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    LogisticRegression(featuresCol<span class="op">=</span><span class="st">"features"</span>, labelCol<span class="op">=</span><span class="st">"label"</span>, maxIter<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>                       regParam<span class="op">=</span><span class="fl">0.01</span>, elasticNetParam<span class="op">=</span><span class="fl">0.0</span>, family<span class="op">=</span><span class="st">"multinomial"</span>),</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> timed(<span class="st">"train pipeline"</span>, <span class="kw">lambda</span>: pipeline.fit(train))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>train: 10,003  test: 3,080</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>train pipeline: 49.1 s</code></pre>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [14]:</pre></div><div id="3c35bc35" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>pred_test <span class="op">=</span> model.transform(test).cache()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>evaluate <span class="op">=</span> <span class="kw">lambda</span> metric: MulticlassClassificationEvaluator(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    labelCol<span class="op">=</span><span class="st">"label"</span>, predictionCol<span class="op">=</span><span class="st">"prediction"</span>, metricName<span class="op">=</span>metric).evaluate(pred_test)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>metrics <span class="op">=</span> {m: <span class="bu">round</span>(timed(<span class="ss">f"evaluate </span><span class="sc">{</span>m<span class="sc">}</span><span class="ss">"</span>, <span class="kw">lambda</span> m<span class="op">=</span>m: evaluate(m)), <span class="dv">4</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>           <span class="cf">for</span> m <span class="kw">in</span> [<span class="st">"accuracy"</span>, <span class="st">"f1"</span>, <span class="st">"weightedPrecision"</span>, <span class="st">"weightedRecall"</span>]}</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>pd.Series(metrics, name<span class="op">=</span><span class="st">"test split"</span>).to_frame()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/11/26 11:16:15 WARN DAGScheduler: Broadcasting large task binary with size 6.9 MiB
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>evaluate accuracy: 1.0 s
+evaluate f1: 0.1 s</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/11/26 11:16:15 WARN DAGScheduler: Broadcasting large task binary with size 6.9 MiB
+26/11/26 11:16:16 WARN DAGScheduler: Broadcasting large task binary with size 6.9 MiB</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>evaluate weightedPrecision: 0.1 s
+evaluate weightedRecall: 0.1 s</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/11/26 11:16:16 WARN DAGScheduler: Broadcasting large task binary with size 6.9 MiB</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">test split</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">accuracy</th>
+<td>0.8445</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">f1</th>
+<td>0.8449</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">weightedPrecision</th>
+<td>0.8517</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">weightedRecall</th>
+<td>0.8445</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div id="8f3ff348" class="cell markdown">
+<section id="accuracy-for-fraud-relevant-intents" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="accuracy-for-fraud-relevant-intents"><span class="header-section-number">2</span> 2. Accuracy for fraud-relevant intents</h2>
+<p>For a fraud desk the costly mistake is a fraud-relevant message (for example <code>compromised_card</code>) predicted as an ordinary intent, because it would land in a routine queue.</p>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [15]:</pre></div><div id="498bee12" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>by_type <span class="op">=</span> (</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    pred_test.join(dim, <span class="st">"label"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    .join(dim.select(F.col(<span class="st">"label"</span>).alias(<span class="st">"prediction"</span>), F.col(<span class="st">"fraud_type"</span>).alias(<span class="st">"pred_fraud_type"</span>)),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"prediction"</span>, <span class="st">"left"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    .withColumn(<span class="st">"fraud_group"</span>, F.coalesce(<span class="st">"fraud_type"</span>, F.lit(<span class="st">"ordinary"</span>)))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    .groupBy(<span class="st">"fraud_group"</span>).agg(</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        F.count(<span class="st">"*"</span>).alias(<span class="st">"test_messages"</span>),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        F.<span class="bu">round</span>(F.avg((F.col(<span class="st">"prediction"</span>) <span class="op">==</span> F.col(<span class="st">"label"</span>)).cast(<span class="st">"int"</span>)), <span class="dv">3</span>).alias(<span class="st">"intent_accuracy"</span>),</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>        <span class="co"># fraud-relevant messages predicted as an ordinary intent</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>        F.<span class="bu">round</span>(F.avg((F.col(<span class="st">"fraud_type"</span>).isNotNull() <span class="op">&amp;</span> F.col(<span class="st">"pred_fraud_type"</span>).isNull()).cast(<span class="st">"int"</span>)), <span class="dv">3</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>         .alias(<span class="st">"sent_to_ordinary_queue"</span>),</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    ).orderBy(<span class="st">"intent_accuracy"</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    .toPandas()</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>by_type.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"intent_accuracy_by_fraud_type.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>by_type</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/11/26 11:16:16 WARN DAGScheduler: Broadcasting large task binary with size 6.9 MiB</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="15">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">fraud_group</th>
+<th data-quarto-table-cell-role="th">test_messages</th>
+<th data-quarto-table-cell-role="th">intent_accuracy</th>
+<th data-quarto-table-cell-role="th">sent_to_ordinary_queue</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>identity_kyc_bypass</td>
+<td>120</td>
+<td>0.758</td>
+<td>0.017</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>virtual_card_abuse</td>
+<td>120</td>
+<td>0.775</td>
+<td>0.150</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>card_compromise</td>
+<td>160</td>
+<td>0.813</td>
+<td>0.100</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>ordinary</td>
+<td>2200</td>
+<td>0.843</td>
+<td>0.000</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>refund_chargeback_abuse</td>
+<td>120</td>
+<td>0.875</td>
+<td>0.058</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>app_fraud_money_mule</td>
+<td>160</td>
+<td>0.894</td>
+<td>0.094</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>account_takeover</td>
+<td>200</td>
+<td>0.925</td>
+<td>0.060</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [16]:</pre></div><div id="71096e1e" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>model.write().overwrite().save(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/intent_model"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"model saved to"</span>, <span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/intent_model"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/11/26 11:16:18 WARN TaskSetManager: Stage 127 contains a task of very large size (6268 KiB). The maximum recommended task size is 1000 KiB.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>model saved to /Users/hanmingyang/Desktop/DSAN6000-Project/data/simulated/results/intent_model</code></pre>
+</div>
+</div></div>
+<div id="127bc061" class="cell markdown">
+<section id="score-the-unlabeled-stream" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="score-the-unlabeled-stream"><span class="header-section-number">3</span> 3. Score the unlabeled stream</h2>
+<p>About 30% of stream messages arrive with a manual label and 70% without one. The saved model is reloaded (as a scoring job would) and applied only to the unlabeled messages.</p>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [17]:</pre></div><div id="d1e05c40" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>stream <span class="op">=</span> spark.read.option(<span class="st">"basePath"</span>, STREAM_PATH).parquet(STREAM_PATH)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>labeled <span class="op">=</span> stream.where(F.col(<span class="st">"label"</span>).isNotNull())</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>unlabeled <span class="op">=</span> stream.where(F.col(<span class="st">"label"</span>).isNull())</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>n_lab, n_unlab <span class="op">=</span> timed(<span class="st">"split labeled / unlabeled"</span>, <span class="kw">lambda</span>: (labeled.count(), unlabeled.count()))</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"labeled (training table): </span><span class="sc">{</span>n_lab<span class="sc">:,}</span><span class="ss">   unlabeled (scoring table): </span><span class="sc">{</span>n_unlab<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>split labeled / unlabeled: 0.5 s
+labeled (training table): 149,964   unlabeled (scoring table): 350,036</code></pre>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [18]:</pre></div><div id="8aa77bd9" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>scoring_model <span class="op">=</span> PipelineModel.load(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/intent_model"</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>scored <span class="op">=</span> (</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    scoring_model.transform(unlabeled.select(<span class="st">"message_id"</span>, <span class="st">"user_id"</span>, <span class="st">"session_id"</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>                                             <span class="st">"received_ts"</span>, <span class="st">"text"</span>, <span class="st">"date"</span>))</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    .withColumn(<span class="st">"confidence"</span>, F.array_max(vector_to_array(<span class="st">"probability"</span>)))</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    .join(F.broadcast(dim.withColumnRenamed(<span class="st">"label"</span>, <span class="st">"prediction"</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>                         .withColumnRenamed(<span class="st">"intent"</span>, <span class="st">"predicted_intent"</span>)), <span class="st">"prediction"</span>, <span class="st">"left"</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    .withColumn(<span class="st">"needs_review"</span>, F.col(<span class="st">"confidence"</span>) <span class="op">&lt;</span> REVIEW_THRESHOLD)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"message_id"</span>, <span class="st">"user_id"</span>, <span class="st">"session_id"</span>, <span class="st">"received_ts"</span>, <span class="st">"date"</span>, <span class="st">"text"</span>,</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>            F.col(<span class="st">"prediction"</span>).cast(<span class="st">"int"</span>).alias(<span class="st">"predicted_label"</span>), <span class="st">"predicted_intent"</span>,</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>            <span class="st">"fraud_type"</span>, <span class="st">"risk_level"</span>, F.<span class="bu">round</span>(<span class="st">"confidence"</span>, <span class="dv">4</span>).alias(<span class="st">"confidence"</span>), <span class="st">"needs_review"</span>)</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>timed(<span class="st">"score and write predictions"</span>,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>      <span class="kw">lambda</span>: scored.write.mode(<span class="st">"overwrite"</span>).partitionBy(<span class="st">"date"</span>).parquet(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/predicted_intents"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/11/26 11:16:21 WARN DAGScheduler: Broadcasting large task binary with size 7.0 MiB
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>score and write predictions: 9.3 s</code></pre>
+</div>
+</div></div>
+<div id="e4464af2" class="cell markdown">
+<section id="what-the-scoring-job-produced" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="what-the-scoring-job-produced"><span class="header-section-number">4</span> 4. What the scoring job produced</h2>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [19]:</pre></div><div id="fa35ca58" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>preds <span class="op">=</span> spark.read.parquet(<span class="ss">f"</span><span class="sc">{</span>OUT<span class="sc">}</span><span class="ss">/predicted_intents"</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>summary <span class="op">=</span> timed(<span class="st">"summarise predictions"</span>, <span class="kw">lambda</span>: preds.agg(</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    F.count(<span class="st">"*"</span>).alias(<span class="st">"scored_messages"</span>),</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">round</span>(F.avg(<span class="st">"confidence"</span>), <span class="dv">3</span>).alias(<span class="st">"mean_confidence"</span>),</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">round</span>(F.avg(F.col(<span class="st">"needs_review"</span>).cast(<span class="st">"int"</span>)), <span class="dv">4</span>).alias(<span class="st">"share_needs_review"</span>),</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">round</span>(F.avg(F.col(<span class="st">"risk_level"</span>).isin(<span class="st">"high"</span>, <span class="st">"medium"</span>).cast(<span class="st">"int"</span>)), <span class="dv">4</span>).alias(<span class="st">"share_risky_intent"</span>),</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>).toPandas())</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>summary.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"intent_scoring_summary.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>summary.T.rename(columns<span class="op">=</span>{<span class="dv">0</span>: <span class="st">"value"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>summarise predictions: 0.6 s</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="19">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">scored_messages</th>
+<td>350036.0000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">mean_confidence</th>
+<td>0.9380</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">share_needs_review</th>
+<td>0.0090</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">share_risky_intent</th>
+<td>0.0997</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [20]:</pre></div><div id="b4a50385" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>top <span class="op">=</span> (preds.groupBy(<span class="st">"predicted_intent"</span>, <span class="st">"risk_level"</span>).count()</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>       .orderBy(F.desc(<span class="st">"count"</span>)).limit(<span class="dv">10</span>).toPandas())</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>top</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="20">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">predicted_intent</th>
+<th data-quarto-table-cell-role="th">risk_level</th>
+<th data-quarto-table-cell-role="th">count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>declined_card_payment</td>
+<td>low</td>
+<td>8330</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>transfer_timing</td>
+<td>low</td>
+<td>6007</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>age_limit</td>
+<td>low</td>
+<td>5951</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>balance_not_updated_after_bank_transfer</td>
+<td>low</td>
+<td>5864</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>declined_transfer</td>
+<td>low</td>
+<td>5863</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>pending_transfer</td>
+<td>low</td>
+<td>5837</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>get_physical_card</td>
+<td>low</td>
+<td>5825</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>pending_card_payment</td>
+<td>low</td>
+<td>5816</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>activate_my_card</td>
+<td>low</td>
+<td>5809</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>card_payment_fee_charged</td>
+<td>low</td>
+<td>5803</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [21]:</pre></div><div id="fb40a6a2" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>timing_table <span class="op">=</span> pd.Series(timings, name<span class="op">=</span><span class="st">"seconds"</span>).to_frame()</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>timing_table.to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"intent_timings.csv"</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>pd.Series(metrics).to_csv(LOCAL_OUT <span class="op">/</span> <span class="st">"intent_test_metrics.csv"</span>, header<span class="op">=</span>[<span class="st">"value"</span>])</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>timing_table</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">seconds</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">train pipeline</th>
+<td>49.1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">evaluate accuracy</th>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">evaluate f1</th>
+<td>0.1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">evaluate weightedPrecision</th>
+<td>0.1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">evaluate weightedRecall</th>
+<td>0.1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">split labeled / unlabeled</th>
+<td>0.5</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">score and write predictions</th>
+<td>9.3</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">summarise predictions</th>
+<td>0.6</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [22]:</pre></div><div id="21a281f7" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>spark.stop()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div></div>
+     </main>
+<!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      const newWindowLabel = "(opens in a new tab)";
+      const newWindowNoteId = "quarto-ext-newwindow-label";
+      // Links reference one hidden label through aria-describedby, so the
+      // announcement never changes their accessible name.
+      var describeNewWindow = (link) => {
+        if (!window.document.getElementById(newWindowNoteId)) {
+          var newWindowNote = window.document.createElement("span");
+          newWindowNote.id = newWindowNoteId;
+          newWindowNote.hidden = true;
+          newWindowNote.textContent = newWindowLabel;
+          window.document.body.appendChild(newWindowNote);
+        }
+        var describedBy = (link.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+        if (!describedBy.includes(newWindowNoteId)) {
+          describedBy.push(newWindowNoteId);
+          link.setAttribute("aria-describedby", describedBy.join(" "));
+        }
+      }
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+            describeNewWindow(link);
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>  </div> <!-- /content --> 
+  
+</body></html>
