@@ -12,6 +12,8 @@ umap-learn
 kaleido
 scikit-learn
 
-# Later Spark and S3 work. Not required to build the local data.
-# pyspark
+# Course ML: python spark/ml_run.py. The EC2 cluster in week 8 uses Spark 4.3.0.
+pyspark
+
+# Later S3 uploads. Not required to build the local data.
 # boto3
