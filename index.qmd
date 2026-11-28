@@ -19,9 +19,10 @@ abstract: |
   84.45% with a Spark MLlib model on the held-out Banking77 test split. A
   separate cluster run processes 50 million simulated messages from one
   million users. Exploratory analysis shows overlapping intent language and
-  distinct simulated session patterns. These results measure intent
-  classification and distributed processing rather than fraud-detection
-  performance.
+  distinct simulated session patterns. A local user-held-out prototype
+  raises PR-AUC for simulated fraud from 0.124 to 0.606 when behavior
+  features are added. That comparison is scikit-learn on the development
+  stream, not yet a Spark result, and the labels come from the simulator.
 ---
 
 # Introduction and Background {#sec-introduction}
@@ -261,28 +262,104 @@ EDA; they have not been evaluated as features in the planned fraud comparison.
 
 ## Tasks and evaluation design
 
-The completed supervised task predicts one of 77 intents using the original
-10,003/3,080 train/test split. The proposed fraud task instead predicts simulated
-`is_fraud`. Intent accuracy cannot substitute for fraud precision or recall.
-Repeated training sentences in the simulated stream also mean that scoring this
-stream is an operational demonstration rather than an independent generalization
-benchmark.
+The supervised task we completed predicts one of 77 intents, using the original
+10,003/3,080 train/test split. The proposed fraud task predicts simulated
+`is_fraud` instead. Intent accuracy tells us nothing about fraud precision or
+recall. We split by user, so all of a user's messages, and so all of their
+sessions, land on one side of the split. This does not stop the same Banking77
+sentence from appearing for a training user and a test user. Scoring the
+simulated stream shows how the pipeline would run in practice. It is not an
+independent test of generalization.
 
 ## Intent classifiers
 
-The scikit-learn model is logistic regression with `C=10`, up to 2,000 iterations,
-and random state 42. The Spark MLlib model is multinomial logistic regression with
-`regParam=0.01`, no elastic-net mixing, and up to 100 iterations. Its model is saved
-and reloaded before scoring unlabeled messages. Predictions include the assigned
-intent, taxonomy risk, probability-based confidence, and a review flag when
-confidence is below 0.5. That threshold is a review heuristic, not a calibrated
-fraud threshold.
+The scikit-learn model is logistic regression with `C=10`, at most 2,000
+iterations, and random state 42. The Spark MLlib model is multinomial logistic
+regression with `regParam=0.01`, no elastic-net mixing, and at most 100
+iterations. We save the Spark model and reload it before scoring unlabeled
+messages. Each prediction includes the assigned intent, its taxonomy risk, and
+a confidence, which is the highest class probability. Messages with confidence
+below 0.5 get a review flag. The flag sends an intent prediction to a person
+for review. It is not a fraud probability, a fraud risk score, or a
+fraud-detection threshold.
 
-The saved Spark intent notebook runs with `ON_CLUSTER=False`. It trains on the
-original Banking77 training split, not on the stream's manually labeled subset;
-the stream is subsequently divided into labeled and unlabeled tables for scoring.
+The saved notebook sets `ON_CLUSTER=False`, so Spark runs in local mode. The
+model is still fit with Spark MLlib. It trains on the original Banking77
+training split, not on the manually labeled part of the stream. After training,
+we split the stream into labeled and unlabeled tables for scoring.
 
 ## Text-only and text-plus-behavior fraud models
+
+The fraud target is simulated `is_fraud`. It is not the intent id and not
+`dim_intent.risk_level`. We split users with seed 7 before fitting any
+vectorizer or scaler: 6,400 users for fitting, 1,600 for validation, and 2,000
+for testing. On the development stream these groups hold 319,419, 81,066, and
+99,515 messages. The test users have 1,264 fraud messages (1.27%). We do not
+shuffle messages across the split, because that would leak messages from one
+session into both sides.
+
+Both models use TF-IDF features on words and bigrams. The second model adds
+fields that are known when a message arrives: seconds since the previous
+message, a first-message flag, the number of messages so far in the session,
+minutes since the session started, the hour, a late-night flag (00:00–05:00),
+and distance from the simulated home. `fraud_pattern`, `persona`, and
+`n_fraud_messages` are not used as features. We set `class_weight="balanced"`
+because only about 1.3% of messages are fraud. For each model we pick the
+cutoff that gives the best F1 on the validation users. We never use the test
+users to choose it. The value 0.986 is that cutoff. It is not a calibrated
+probability of fraud.
+
+The numbers below come from the local scikit-learn prototype (`src/ml/run.py`).
+`spark/ml_run.py` contains a matching Spark MLlib version. It uses
+tokenization, term-frequency features, IDF weighting, scaling of the behavior
+features, and logistic regression. It uses the same user split and also picks
+the cutoff on validation users, but its text features differ from the
+scikit-learn vectorizer. We have not run the Spark version yet, so this report
+has no results from it.
+
+| Model | Precision | Recall | F1 | PR-AUC | Threshold |
+|---|---:|---:|---:|---:|---:|
+| Text only | 0.144 | 0.405 | 0.212 | 0.124 | 0.894 |
+| Text + behavior | 0.713 | 0.472 | 0.568 | 0.606 | 0.986 |
+
+PR-AUC does not depend on the cutoff. On the same test users, adding behavior
+raises it from 0.124 to 0.606. At the F1 cutoff, the text-plus-behavior model
+flags 836 messages: 596 true positives and 240 false positives. It misses 668
+fraud messages.
+
+For the text-plus-behavior model, each cutoff below is either fixed in advance
+or chosen on the validation users, and then scored on the test users.
+
+| Rule | Threshold | Precision | Recall | F1 | Messages flagged |
+|---|---:|---:|---:|---:|---:|
+| Maximum validation F1 | 0.986 | 0.713 | 0.472 | 0.568 | 836 |
+| Validation recall at least 70% | 0.866 | 0.316 | 0.692 | 0.434 | 2,770 |
+| Validation recall at least 80% | 0.743 | 0.235 | 0.780 | 0.361 | 4,203 |
+| Fixed 0.5 | 0.500 | 0.168 | 0.882 | 0.282 | 6,640 |
+
+The 70% rule gets 70.1% recall on validation and 69.2% on test, and the test
+set played no part in choosing it. Moving from the F1 cutoff to this
+high-recall cutoff catches 279 more simulated fraud messages. It also adds
+1,655 false positives, so the review queue grows from 836 to 2,770 messages.
+On the validation precision-recall curve, the best precision at recall of 0.70
+or higher is 0.331. No cutoff keeps precision near 0.71 while reaching recall
+near 0.70. We keep the F1 cutoff as the baseline and offer 0.866 as the
+high-recall option.
+
+The per-pattern recall below uses the same numeric cutoff, 0.5, for both
+models. The two models have different score distributions, so this table does
+not compare them at the same false-positive rate. It is also not the F1
+operating point. Behavior raises recall for money mule, location anomaly, and
+night activity. Text alone already catches most card testing. Behavior does not
+help with account takeover, which looks like a short daytime session from home.
+
+| Pattern | Text only | Text + behavior |
+|---|---:|---:|
+| Account takeover | 0.763 | 0.693 |
+| Money mule | 0.866 | 0.984 |
+| Card testing | 0.954 | 0.934 |
+| Location anomaly | 0.715 | 0.849 |
+| Night activity | 0.763 | 0.905 |
 
 # Results {#sec-results}
 
@@ -309,6 +386,14 @@ The recorded training time is 49.1 seconds and scoring/write time is 9.3 seconds
 Source: `spark/output/intent_scoring_summary.csv` and `intent_timings.csv`.
 
 ## Contribution of behavior to fraud detection
+
+On the development stream, the local scikit-learn prototype in @sec-ml raises
+held-out PR-AUC from 0.124 to 0.606 when the arrival-time behavior features
+are added. That comparison uses the user split and the validation F1 cutoff
+described above. It recovers simulated `is_fraud`. It is not a Spark MLlib
+result, and it is not evidence about confirmed bank fraud. The session table
+below still describes the generator: some simulated bursts are shorter,
+denser, or longer than ordinary sessions.
 
 ## Full-stream distributed processing
 
@@ -361,15 +446,20 @@ full-stream cluster intent inference, or measured single-machine memory failure.
 Text models classify Banking77 intent with useful held-out accuracy, while the
 routing and keyword analyses identify overlap between ordinary and fraud-relevant
 wording. Spark processes the larger simulated stream and extracts compact
-behavioral summaries. These results establish the analysis foundation; they do
-not yet establish how much behavior adds to fraud detection.
+behavioral summaries. On the development stream, a local user-held-out
+prototype finds that arrival-time behavior raises PR-AUC for simulated
+`is_fraud` from 0.124 to 0.606. The Spark version of that comparison has not
+been run. The lift copies the simulator. It does not measure confirmed bank
+fraud.
 
 ## Limitations and validity
 
 Fraud labels are assigned by generator rules. Learning those rules successfully
 would not demonstrate performance on real bank fraud. User histories, cities,
 and times are synthetic; city-center distances are not verified impossible
-travel. Repeated source sentences limit linguistic diversity. Taxonomy-assigned
+travel. Repeated source sentences limit linguistic diversity. The user split
+blocks session leakage, but a sentence shown to a training user can still
+appear for a test user. Taxonomy-assigned
 risk differs from simulated message-level fraud, and false-alert rates measured
 against one definition should not be described using the other.
 
@@ -381,12 +471,30 @@ validated against review capacity or monetary costs.
 
 ## Future work
 
+Monday's informal presentation can show three completed pieces: the Spark
+intent classifier on the official split, the local scoring of unlabeled
+development-stream messages, and the scikit-learn user-holdout comparison of
+text against text plus behavior. The presentation should keep the 0.986 cutoff
+as the F1 baseline and the 0.866 cutoff as the high-recall alternative. It
+should not describe either number as a Spark fraud result.
+
+Before the December 13 manuscript, the same comparison needs to be run with
+`spark/ml_run.py` and the table above replaced only after that run. The
+script already switches to the EC2 cluster with `ON_CLUSTER=1` once a bucket
+exists. The algorithm does not change when the file gets larger. New cutoffs
+stay on the validation users. Intent confidence still needs to be checked
+against how many messages a review queue can read. None of these steps turns
+taxonomy risk or simulated `is_fraud` into confirmed bank fraud.
+
 ## Conclusion
 
 The project has implemented data cleaning, a reproducible simulated message
 stream, text and behavioral EDA, intent classifiers, and S3/Spark processing of
-50 million messages. The strongest completed predictive result is 89.06% intent
-accuracy on the held-out Banking77 test split.
+50 million messages. The Spark intent model reaches 84.45% accuracy on the
+held-out Banking77 test split. The local fraud prototype, on 2,000 held-out
+users, raises PR-AUC from 0.124 to 0.606 when behavior features are added.
+That second number is simulated-label recovery from scikit-learn, not yet a
+Spark result.
 
 # References {.unnumbered #sec-references}
 
