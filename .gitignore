@@ -22,3 +22,9 @@ __pycache__/
 /.quarto/
 /_site/
 **/*.quarto_ipynb
+
+# Metrics rewritten by spark/ml_run.py and python -m src.ml.run.
+/ml/output/
+
+# Local EDA tables left from an earlier run. Not part of the shared data.
+/data/eda/
